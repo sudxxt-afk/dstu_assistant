@@ -9,6 +9,9 @@ class Settings(BaseSettings):
 
     bot_token: str = ""
     allowed_user_id: int | None = None
+    # Кастомный адрес Telegram Bot API (напр. Cloudflare Worker-прокси).
+    # Пусто -> штатный api.telegram.org.
+    telegram_api_base: str = ""
 
     @field_validator("allowed_user_id", mode="before")
     @classmethod

@@ -6,6 +6,8 @@ import logging
 
 from aiogram import BaseMiddleware, Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, TelegramObject
@@ -122,8 +124,15 @@ async def main():
         log.error("BOT_TOKEN не задан в .env")
         return
 
+    session = None
+    if settings.telegram_api_base:
+        api_server = TelegramAPIServer.from_base(settings.telegram_api_base.rstrip("/"))
+        session = AiohttpSession(api=api_server)
+        log.info("Используется кастомный Telegram API: %s", settings.telegram_api_base)
+
     bot = Bot(
         token=settings.bot_token,
+        session=session,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp = Dispatcher(storage=MemoryStorage())
