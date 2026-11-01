@@ -1,0 +1,31 @@
+services:
+  api:
+    build: ./backend
+    command: python -m app.api_main
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/app.db
+      - VAULT_PATH=/data/vault
+    volumes:
+      - app_data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  bot:
+    build: ./backend
+    command: python -m app.bot_main
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/app.db
+      - VAULT_PATH=/data/vault
+    volumes:
+      - app_data:/data
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  # Том с SQLite-базой и Obsidian-хранилищем.
+  # Папку /data/vault синхронизируй Syncthing'ом в свой Obsidian vault.
+  app_data:

@@ -1,0 +1,26 @@
+# Secrets
+.env
+
+# Data (sqlite + obsidian vault)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+.vite/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.log

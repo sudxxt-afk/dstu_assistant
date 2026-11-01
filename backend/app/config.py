@@ -1,0 +1,27 @@
+from __future__ import annotations
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    bot_token: str = ""
+    allowed_user_id: int | None = None
+
+    @field_validator("allowed_user_id", mode="before")
+    @classmethod
+    def _empty_to_none(cls, v):
+        # Пустая строка в .env (ALLOWED_USER_ID=) -> None
+        if v is None or (isinstance(v, str) and v.strip() == ""):
+            return None
+        return v
+    api_token: str = "change-me"
+
+    tz: str = "Europe/Moscow"
+    database_url: str = "sqlite+aiosqlite:////data/app.db"
+    vault_path: str = "/data/vault"
+
+
+settings = Settings()
