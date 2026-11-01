@@ -34,6 +34,7 @@ class AccessMiddleware(BaseMiddleware):
         allowed = settings.allowed_user_id
 
         if allowed is None:
+            log.info("ACCESS: unknown user, telegram_id=%s", uid)
             if isinstance(event, Message):
                 await event.answer(
                     f"Твой Telegram ID: <code>{uid}</code>\n"
@@ -41,6 +42,7 @@ class AccessMiddleware(BaseMiddleware):
                 )
             return
         if uid != allowed:
+            log.info("ACCESS: denied telegram_id=%s", uid)
             return
         return await handler(event, data)
 
