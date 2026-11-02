@@ -50,6 +50,21 @@ services:
       - "21027:21027/udp" # обнаружение в локальной сети
     restart: unless-stopped
 
+  # Tailscale Funnel: публичный HTTPS https://dstu.<tailnet>.ts.net -> web:80.
+  # Работает на исходящих (без входящих/CGNAT). Запуск: docker compose --profile tailscale up -d
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: dstu
+    environment:
+      - TS_USERSPACE=true
+      - TS_STATE_DIR=/var/lib/tailscale
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+    depends_on:
+      - web
+    restart: unless-stopped
+    profiles: ["tailscale"]
+
   # Caddy: авто-HTTPS (Let's Encrypt) напрямую, если у малинки есть входящий 80/443.
   # Запуск: docker compose --profile caddy up -d
   caddy:
@@ -86,3 +101,5 @@ volumes:
   # Сертификаты/состояние Caddy.
   caddy_data:
   caddy_config:
+  # Состояние Tailscale (ключи ноды).
+  tailscale_state:
