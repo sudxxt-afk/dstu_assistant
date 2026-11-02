@@ -51,12 +51,12 @@ services:
     restart: unless-stopped
 
   # Cloudflare Tunnel: публичный HTTPS на dstu.zazavpn.ru -> web:80.
-  # Запуск только с профилем: docker compose --profile tunnel up -d
+  # Конфиг и креды в ~/.cloudflared на хосте. Запуск: docker compose --profile tunnel up -d
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    volumes:
+      - /home/kudesnik/.cloudflared:/etc/cloudflared:ro
     depends_on:
       - web
     restart: unless-stopped
