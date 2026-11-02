@@ -13,10 +13,7 @@ async function load() {
 }
 async function add() {
   if (!title.value.trim()) return;
-  await api.post("/tasks", {
-    title: title.value.trim(),
-    due_date: due.value || null,
-  });
+  await api.post("/tasks", { title: title.value.trim(), due_date: due.value || null });
   title.value = "";
   due.value = "";
   load();
@@ -36,10 +33,10 @@ onMounted(load);
 
 <template>
   <div class="head spread">
-    <h1>Задачи</h1>
+    <h1 class="t-h1">Задачи</h1>
     <label class="chk">
       <input type="checkbox" v-model="showDone" @change="load" />
-      <span class="muted">показывать выполненные</span>
+      <span class="muted">выполненные</span>
     </label>
   </div>
 
@@ -49,15 +46,15 @@ onMounted(load);
     <button class="btn btn-primary"><Icon name="plus" :size="16" /></button>
   </form>
 
-  <div v-if="!tasks.length" class="empty dim">Задач нет</div>
+  <div v-if="!tasks.length" class="empty">Задач нет</div>
   <div v-else class="list">
     <div v-for="t in tasks" :key="t.id" class="task" :class="{ done: t.done }">
-      <button class="box" :class="{ on: t.done }" @click="toggle(t)">
+      <button class="checkbox" :class="{ 'is-checked': t.done }" @click="toggle(t)">
         <Icon v-if="t.done" name="check" :size="13" />
       </button>
       <div class="ttl">{{ t.title }}</div>
       <div v-if="t.due_date" class="due-tag mono">{{ dm(t.due_date) }}</div>
-      <button class="del" @click="del(t)"><Icon name="trash" :size="15" /></button>
+      <button class="icon-btn sm danger" @click="del(t)"><Icon name="trash" :size="15" /></button>
     </div>
   </div>
 </template>
@@ -67,19 +64,14 @@ onMounted(load);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-h1 {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 .chk {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
   cursor: pointer;
 }
 .chk input {
@@ -88,12 +80,32 @@ h1 {
 }
 .addbar {
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 .due {
   max-width: 150px;
 }
+.task {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+.ttl {
+  font-size: var(--text-base);
+}
+.task.done .ttl {
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+.due-tag {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
 @media (max-width: 759px) {
   .addbar {
     flex-wrap: wrap;
@@ -105,56 +117,5 @@ h1 {
     max-width: none;
     flex: 1;
   }
-}
-.list {
-  display: flex;
-  flex-direction: column;
-}
-.task {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--line);
-}
-.box {
-  width: 18px;
-  height: 18px;
-  border: 1.5px solid var(--line-strong);
-  border-radius: 4px;
-  display: grid;
-  place-items: center;
-  color: var(--accent-fg);
-  transition: all 0.12s var(--ease);
-}
-.box:hover {
-  border-color: var(--accent);
-}
-.box.on {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.ttl {
-  font-size: 14px;
-}
-.task.done .ttl {
-  color: var(--fg-3);
-  text-decoration: line-through;
-}
-.due-tag {
-  font-size: 12px;
-  color: var(--fg-2);
-}
-.del {
-  color: var(--fg-3);
-  display: flex;
-  padding: 4px;
-}
-.del:hover {
-  color: var(--danger);
-}
-.empty {
-  padding: 24px 0;
 }
 </style>

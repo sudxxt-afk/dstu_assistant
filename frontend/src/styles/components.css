@@ -1,0 +1,249 @@
+/* ============================================================
+   Components — переиспользуемые примитивы UI
+   Все значения — из токенов. Варианты и состояния документированы
+   в DESIGN.md.
+   ============================================================ */
+
+/* ---------- Button ----------
+   Варианты: .btn (secondary) · .btn-primary · .btn-ghost · .btn-danger
+   Размеры:  .btn (md) · .btn-sm
+   Состояния: :hover :active :disabled .is-loading */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 34px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+.btn:hover {
+  border-color: var(--color-text-tertiary);
+}
+.btn:active {
+  transform: translateY(0.5px);
+}
+.btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.btn-primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: var(--weight-semibold);
+}
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+.btn-ghost {
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  background: var(--color-surface-hover);
+  border-color: transparent;
+}
+.btn-danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+.btn-sm {
+  height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+}
+.btn.is-loading {
+  color: transparent;
+  pointer-events: none;
+  position: relative;
+}
+.btn.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--radius-full);
+  color: var(--color-on-accent);
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Icon button ----------
+   .icon-btn (md 30px) · .icon-btn.sm (24px) */
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  transition: color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+}
+.icon-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+.icon-btn.sm {
+  width: 24px;
+  height: 24px;
+}
+.icon-btn.danger:hover {
+  color: var(--color-danger);
+}
+
+/* ---------- Form field ----------
+   .field > label + control. Состояния: :focus [aria-invalid] :disabled */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.field > label {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+input,
+select,
+textarea {
+  height: 36px;
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--text-base);
+  width: 100%;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+input:disabled,
+select:disabled {
+  opacity: 0.5;
+}
+select {
+  appearance: none;
+  padding-right: var(--space-6);
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+    linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* ---------- Card / surface ---------- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* ---------- Tag (мета-подпись: тип пары) ---------- */
+.tag {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Badge ----------
+   .badge (accent по умолчанию) · .badge-danger · .badge-muted */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
+}
+.badge-danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.badge-muted {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-strong);
+}
+
+/* ---------- Segmented control ----------
+   Переключатель из 2+ сегментов. .segmented > button, .is-active */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.segmented > button {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  transition: color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+}
+.segmented > button:hover {
+  color: var(--color-text);
+}
+.segmented > button.is-active {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* ---------- Checkbox ---------- */
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  color: var(--color-on-accent);
+  transition: border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+}
+.checkbox:hover {
+  border-color: var(--color-accent);
+}
+.checkbox.is-checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* ---------- Empty state ---------- */
+.empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  padding: var(--space-6) 0;
+}

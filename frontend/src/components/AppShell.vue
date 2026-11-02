@@ -15,16 +15,18 @@ const nav = [
   { to: "/settings", icon: "settings", label: "Настройки" },
 ];
 
+function logout() {
+  clearAuth();
+  router.push("/login");
+}
+
 onMounted(async () => {
   try {
     const d = await api.get("/schedule/day");
     week.value = d.week_number;
     parity.value = d.parity === "odd" ? "нечётная" : "чётная";
   } catch (e) {
-    if (e.status === 401) {
-      clearAuth();
-      router.push("/login");
-    }
+    if (e.status === 401) logout();
   }
 });
 </script>
@@ -41,7 +43,7 @@ onMounted(async () => {
       </nav>
       <div class="foot">
         <div v-if="week" class="week mono">W{{ week }} · {{ parity }}</div>
-        <button class="logout" @click="clearAuth(); router.push('/login')">
+        <button class="logout" @click="logout">
           <Icon name="logout" :size="15" /> выйти
         </button>
       </div>
@@ -66,11 +68,10 @@ onMounted(async () => {
   display: none;
 }
 .content {
-  padding: 28px 32px 32px;
-  max-width: 1040px;
+  padding: var(--space-8) var(--page-pad) var(--space-8);
+  max-width: var(--content-max);
 }
 
-/* ---------- боковое меню (десктоп) ---------- */
 @media (min-width: 760px) {
   .shell {
     display: grid;
@@ -82,16 +83,16 @@ onMounted(async () => {
     position: sticky;
     top: 0;
     height: 100vh;
-    border-right: 1px solid var(--line);
-    padding: 20px 14px;
+    border-right: 1px solid var(--color-border);
+    padding: var(--space-5) var(--space-3);
   }
 }
 
 .brand {
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: -0.01em;
-  padding: 6px 10px 20px;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  padding: var(--space-2) var(--space-3) var(--space-5);
 }
 nav {
   display: flex;
@@ -101,58 +102,59 @@ nav {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 8px 10px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  color: var(--fg-2);
-  font-size: 13.5px;
-  font-weight: 500;
-  transition: color 0.12s var(--ease), background 0.12s var(--ease);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  transition: color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
 }
 .nav-item:hover {
-  color: var(--fg);
-  background: var(--surface);
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 .nav-item.router-link-active {
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 .foot {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
+  gap: var(--space-3);
+  padding: var(--space-3);
 }
 .week {
-  font-size: 12px;
-  color: var(--fg-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
 }
 .logout {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: var(--fg-3);
-  transition: color 0.12s var(--ease);
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  transition: color var(--dur-fast) var(--ease-standard);
 }
 .logout:hover {
-  color: var(--danger);
+  color: var(--color-danger);
 }
 
-/* ---------- нижняя навигация (только мобила) ---------- */
+/* нижняя навигация — только мобила */
 .tabbar {
-  display: none; /* на десктопе скрыта; показывается только на узком экране */
+  display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   justify-content: space-around;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  background: color-mix(in srgb, var(--color-canvas) 90%, transparent);
   backdrop-filter: blur(12px);
-  border-top: 1px solid var(--line);
-  padding: 7px 0 calc(6px + env(safe-area-inset-bottom));
-  z-index: 10;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-2) 0 calc(var(--space-2) + env(safe-area-inset-bottom));
+  z-index: var(--z-nav);
 }
 .tab {
   display: flex;
@@ -160,14 +162,14 @@ nav {
   align-items: center;
   gap: 3px;
   flex: 1;
-  padding: 4px 2px;
-  color: var(--fg-3);
-  font-size: 10px;
-  font-weight: 500;
-  transition: color 0.12s var(--ease);
+  padding: var(--space-1) 2px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  transition: color var(--dur-fast) var(--ease-standard);
 }
 .tab.router-link-active {
-  color: var(--accent);
+  color: var(--color-accent);
 }
 
 @media (max-width: 759px) {
@@ -175,7 +177,7 @@ nav {
     display: flex;
   }
   .content {
-    padding: calc(16px + env(safe-area-inset-top)) 16px
+    padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-4)
       calc(74px + env(safe-area-inset-bottom));
   }
 }

@@ -25,22 +25,15 @@ async function saveConfig() {
 async function saveBells() {
   const body = bells.value
     .filter((b) => b.start_time && b.end_time)
-    .map((b) => ({
-      pair_number: Number(b.pair_number),
-      start_time: b.start_time,
-      end_time: b.end_time,
-    }));
+    .map((b) => ({ pair_number: Number(b.pair_number), start_time: b.start_time, end_time: b.end_time }));
   await api.put("/bells", body);
   flash(savedBells);
   load();
 }
 function addBell() {
-  const n = bells.value.length + 1;
-  bells.value.push({ pair_number: n, start_time: "", end_time: "" });
+  bells.value.push({ pair_number: bells.value.length + 1, start_time: "", end_time: "" });
 }
-function rmBell(i) {
-  bells.value.splice(i, 1);
-}
+const rmBell = (i) => bells.value.splice(i, 1);
 function flash(r) {
   r.value = true;
   setTimeout(() => (r.value = false), 1500);
@@ -49,10 +42,10 @@ onMounted(load);
 </script>
 
 <template>
-  <h1>Настройки</h1>
+  <h1 class="t-h1 page">Настройки</h1>
 
   <div v-if="cfg" class="card block">
-    <h2>Семестр</h2>
+    <h2 class="t-h2">Семестр</h2>
     <div class="grid">
       <div class="field">
         <label>Начало семестра</label>
@@ -86,7 +79,7 @@ onMounted(load);
 
   <div class="card block">
     <div class="spread row">
-      <h2>Звонки</h2>
+      <h2 class="t-h2">Звонки</h2>
       <button class="btn btn-ghost btn-sm" @click="addBell"><Icon name="plus" :size="14" /> пара</button>
     </div>
     <div class="bells">
@@ -95,7 +88,7 @@ onMounted(load);
         <input type="time" v-model="b.start_time" class="mono" />
         <span class="dim">—</span>
         <input type="time" v-model="b.end_time" class="mono" />
-        <button class="mini del" @click="rmBell(i)"><Icon name="trash" :size="14" /></button>
+        <button class="icon-btn sm danger" @click="rmBell(i)"><Icon name="trash" :size="14" /></button>
       </div>
     </div>
     <div class="row savebar">
@@ -106,60 +99,47 @@ onMounted(load);
 </template>
 
 <style scoped>
-h1 {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 20px;
-}
-h2 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 14px;
+.page {
+  margin-bottom: var(--space-5);
 }
 .block {
-  padding: 18px;
-  margin-bottom: 18px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
   max-width: 560px;
+}
+.block h2 {
+  margin-bottom: var(--space-4);
 }
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: var(--space-4);
 }
 .savebar {
-  margin-top: 16px;
-  gap: 12px;
+  margin-top: var(--space-4);
+  gap: var(--space-3);
 }
 .ok {
-  font-size: 12px;
-  color: var(--accent);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
 }
 .bells {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .bell {
   display: grid;
   grid-template-columns: 20px 1fr auto 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
 }
 .bell input {
   max-width: 130px;
 }
 .num {
-  color: var(--fg-3);
-  font-size: 13px;
-}
-.mini {
-  display: flex;
-  padding: 4px;
-  color: var(--fg-3);
-}
-.mini.del:hover {
-  color: var(--danger);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
 }
 @media (max-width: 759px) {
   .grid {

@@ -7,7 +7,6 @@ const mode = ref("day"); // day | week
 const sel = ref(new Date());
 const day = ref(null);
 const week = ref([]);
-const loading = ref(false);
 
 const SHORT = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -15,19 +14,13 @@ const dm = (s) => s.slice(8, 10) + "." + s.slice(5, 7);
 const shortWd = (s) => SHORT[new Date(s).getDay()];
 
 async function load() {
-  loading.value = true;
-  try {
-    if (mode.value === "day") {
-      day.value = await api.get(`/schedule/day?date=${iso(sel.value)}`);
-    } else {
-      const all = await api.get(`/schedule/week?date=${iso(sel.value)}`);
-      week.value = all.slice(0, 6); // Пн–Сб
-    }
-  } finally {
-    loading.value = false;
+  if (mode.value === "day") {
+    day.value = await api.get(`/schedule/day?date=${iso(sel.value)}`);
+  } else {
+    const all = await api.get(`/schedule/week?date=${iso(sel.value)}`);
+    week.value = all.slice(0, 6);
   }
 }
-
 function shift(n) {
   const d = new Date(sel.value);
   d.setDate(d.getDate() + (mode.value === "week" ? n * 7 : n));
@@ -56,21 +49,21 @@ onMounted(load);
 
 <template>
   <div class="head spread">
-    <div class="toggle">
-      <button :class="{ on: mode === 'day' }" @click="setMode('day')">День</button>
-      <button :class="{ on: mode === 'week' }" @click="setMode('week')">Неделя</button>
+    <div class="segmented">
+      <button :class="{ 'is-active': mode === 'day' }" @click="setMode('day')">День</button>
+      <button :class="{ 'is-active': mode === 'week' }" @click="setMode('week')">Неделя</button>
     </div>
     <div class="nav">
       <button class="btn btn-ghost btn-sm" @click="today">Сегодня</button>
-      <button class="ico" @click="shift(-1)"><Icon name="chevronL" :size="18" /></button>
-      <button class="ico" @click="shift(1)"><Icon name="chevronR" :size="18" /></button>
+      <button class="icon-btn" @click="shift(-1)"><Icon name="chevronL" :size="18" /></button>
+      <button class="icon-btn" @click="shift(1)"><Icon name="chevronR" :size="18" /></button>
     </div>
   </div>
 
   <!-- ДЕНЬ -->
   <section v-if="mode === 'day' && day">
     <div class="daytitle">
-      <h1>{{ day.weekday }}<span class="dim">, {{ dm(day.date) }}</span></h1>
+      <h1 class="t-display">{{ day.weekday }}<span class="dim">, {{ dm(day.date) }}</span></h1>
       <div class="mono wk">неделя {{ day.week_number }} · {{ day.parity === "odd" ? "нечётная" : "чётная" }}</div>
     </div>
 
@@ -118,115 +111,61 @@ onMounted(load);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 22px;
-}
-@media (max-width: 759px) {
-  .head {
-    flex-wrap: wrap;
-  }
-}
-.toggle {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.toggle button {
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--fg-2);
-}
-.toggle button.on {
-  background: var(--surface);
-  color: var(--fg);
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 .nav {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-.ico {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  color: var(--fg-2);
-}
-.ico:hover {
-  background: var(--surface);
-  color: var(--fg);
+  gap: var(--space-2);
 }
 
 .daytitle {
-  margin-bottom: 18px;
-}
-h1 {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  margin-bottom: var(--space-5);
 }
 .wk {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--accent);
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-}
 .pair {
   display: grid;
   grid-template-columns: 64px 1fr auto;
-  gap: 16px;
-  padding: 14px 14px 14px 13px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) 13px;
   border-left: 2px solid transparent;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border);
 }
 .pair.now {
-  border-left-color: var(--accent);
-  background: var(--accent-soft);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 .time {
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
 }
 .body {
   min-width: 0;
 }
 .name {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
 }
 .num {
-  color: var(--fg-3);
-  margin-right: 8px;
-  font-size: 13px;
-}
-.badge {
-  margin-left: 8px;
-  font-size: 11px;
-  color: var(--accent);
-  border: 1px solid var(--accent-line);
-  border-radius: 3px;
-  padding: 1px 5px;
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
+  font-size: var(--text-sm);
 }
 .meta {
-  margin-top: 3px;
-  font-size: 13px;
-  color: var(--fg-2);
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 .room {
-  font-size: 13px;
-  color: var(--fg-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
   align-self: center;
-}
-.empty {
-  color: var(--fg-3);
-  padding: 20px 0;
 }
 
 /* неделя */
@@ -234,46 +173,50 @@ h1 {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .col {
-  background: var(--bg);
-  padding: 10px;
+  background: var(--color-canvas);
+  padding: var(--space-3);
   min-height: 160px;
 }
 .colhead {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding-bottom: 10px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 .wd {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
 }
 .cell {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 .ctime {
-  font-size: 12px;
-  color: var(--accent);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
 }
 .cname {
-  font-size: 13px;
+  font-size: var(--text-sm);
   margin: 1px 0;
 }
 .croom {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .cempty {
-  padding: 8px 0;
+  padding: var(--space-2) 0;
 }
+
 @media (max-width: 759px) {
+  .head {
+    flex-wrap: wrap;
+  }
   .weekwrap {
     grid-template-columns: 1fr;
   }

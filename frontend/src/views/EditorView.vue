@@ -29,7 +29,7 @@ const byDay = computed(() => {
   return g;
 });
 
-/* --- предметы --- */
+/* предметы */
 const subjForm = ref({ id: null, name: "", teacher: "" });
 async function saveSubject() {
   if (!subjForm.value.name.trim()) return;
@@ -48,18 +48,14 @@ async function delSubject(s) {
   await load();
 }
 
-/* --- пары --- */
+/* пары */
 const blankLesson = () => ({
   id: null, subject_id: subjects.value[0]?.id ?? null, type: "лекция",
   weekday: 1, pair_number: 1, parity: "every", room: "", teacher_override: "",
 });
 const lf = ref(null);
-function newLesson() {
-  lf.value = blankLesson();
-}
-function editLesson(l) {
-  lf.value = { ...l, teacher_override: l.teacher_override || "", room: l.room || "" };
-}
+const newLesson = () => (lf.value = blankLesson());
+const editLesson = (l) => (lf.value = { ...l, teacher_override: l.teacher_override || "", room: l.room || "" });
 async function saveLesson() {
   const b = {
     subject_id: lf.value.subject_id, type: lf.value.type,
@@ -81,11 +77,11 @@ onMounted(load);
 </script>
 
 <template>
-  <h1>Редактор</h1>
+  <h1 class="t-h1 page">Редактор</h1>
 
   <!-- ПАРЫ -->
-  <div class="sec spread">
-    <h2>Пары</h2>
+  <div class="sec">
+    <h2 class="t-h2">Пары</h2>
     <button class="btn btn-primary btn-sm" @click="newLesson" :disabled="!subjects.length">
       <Icon name="plus" :size="15" /> Пара
     </button>
@@ -112,15 +108,11 @@ onMounted(load);
       </div>
       <div class="field">
         <label>День</label>
-        <select v-model="lf.weekday">
-          <option v-for="d in 6" :key="d" :value="d">{{ WD[d] }}</option>
-        </select>
+        <select v-model="lf.weekday"><option v-for="d in 6" :key="d" :value="d">{{ WD[d] }}</option></select>
       </div>
       <div class="field">
         <label>Пара</label>
-        <select v-model="lf.pair_number">
-          <option v-for="n in 8" :key="n" :value="n">{{ n }}</option>
-        </select>
+        <select v-model="lf.pair_number"><option v-for="n in 8" :key="n" :value="n">{{ n }}</option></select>
       </div>
       <div class="field">
         <label>Аудитория</label>
@@ -147,18 +139,18 @@ onMounted(load);
           <div class="lname">{{ subjName(l.subject_id) }}</div>
           <div class="lmeta">
             <span class="tag">{{ l.type }}</span>
-            <span v-if="l.parity !== 'every'" class="pbadge">{{ parityLabel(l.parity) }}</span>
+            <span v-if="l.parity !== 'every'" class="badge">{{ parityLabel(l.parity) }}</span>
             <span v-if="l.room" class="mono dim"> · {{ l.room }}</span>
           </div>
         </div>
-        <button class="mini" @click="editLesson(l)"><Icon name="editor" :size="14" /></button>
-        <button class="mini del" @click="delLesson(l)"><Icon name="trash" :size="14" /></button>
+        <button class="icon-btn sm" @click="editLesson(l)"><Icon name="editor" :size="14" /></button>
+        <button class="icon-btn sm danger" @click="delLesson(l)"><Icon name="trash" :size="14" /></button>
       </div>
     </div>
   </div>
 
   <!-- ПРЕДМЕТЫ -->
-  <div class="sec"><h2>Предметы</h2></div>
+  <div class="sec"><h2 class="t-h2">Предметы</h2></div>
   <form class="subjbar" @submit.prevent="saveSubject">
     <input v-model="subjForm.name" placeholder="Название" />
     <input v-model="subjForm.teacher" placeholder="Преподаватель" />
@@ -169,141 +161,119 @@ onMounted(load);
     <div v-for="s in subjects" :key="s.id" class="srow">
       <div class="sname">{{ s.name }}</div>
       <div class="muted small">{{ s.teacher }}</div>
-      <button class="mini" @click="editSubject(s)"><Icon name="editor" :size="14" /></button>
-      <button class="mini del" @click="delSubject(s)"><Icon name="trash" :size="14" /></button>
+      <button class="icon-btn sm" @click="editSubject(s)"><Icon name="editor" :size="14" /></button>
+      <button class="icon-btn sm danger" @click="delSubject(s)"><Icon name="trash" :size="14" /></button>
     </div>
   </div>
 </template>
 
 <style scoped>
-h1 {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-h2 {
-  font-size: 15px;
-  font-weight: 600;
+.page {
+  margin-bottom: var(--space-2);
 }
 .sec {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 28px 0 14px;
+  margin: var(--space-8) 0 var(--space-4);
 }
 .form {
-  padding: 16px;
-  margin-bottom: 18px;
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 .formtitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--fg-2);
-  margin-bottom: 14px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
 }
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: var(--space-3);
 }
 .col2 {
   grid-column: span 2;
 }
 .actions {
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 .days {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .day {
-  background: var(--bg);
-  padding: 12px 14px;
+  background: var(--color-canvas);
+  padding: var(--space-3) var(--space-4);
 }
 .dayhead {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--fg-2);
-  margin-bottom: 10px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
 }
 .lrow {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 7px 0;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
 }
 .num {
-  color: var(--fg-3);
-  font-size: 13px;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
   width: 14px;
 }
 .lname {
-  font-size: 14px;
+  font-size: var(--text-base);
 }
 .lmeta {
-  font-size: 12px;
-  color: var(--fg-2);
-  margin-top: 1px;
-}
-.pbadge {
-  color: var(--accent);
-  font-size: 11px;
-  margin-left: 4px;
-}
-.mini {
   display: flex;
-  padding: 4px;
-  color: var(--fg-3);
-  border-radius: 3px;
-}
-.mini:hover {
-  color: var(--fg);
-  background: var(--surface-2);
-}
-.mini.del:hover {
-  color: var(--danger);
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: 1px;
 }
 
 .subjbar {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.subjlist {
-  display: flex;
-  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 .srow {
   display: grid;
   grid-template-columns: 1fr 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 10px 2px;
-  border-bottom: 1px solid var(--line);
+  gap: var(--space-3);
+  padding: var(--space-3) 2px;
+  border-bottom: 1px solid var(--color-border);
 }
 .sname {
-  font-size: 14px;
+  font-size: var(--text-base);
 }
 .small {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 @media (max-width: 759px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .col2 {
-    grid-column: span 2;
-  }
   .days {
     grid-template-columns: 1fr;
+  }
+  .subjbar {
+    flex-wrap: wrap;
+  }
+  .subjbar > input {
+    flex: 1 1 100%;
   }
 }
 </style>

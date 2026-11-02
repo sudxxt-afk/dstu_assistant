@@ -47,39 +47,38 @@ async function submit() {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: var(--space-5);
 }
 .box {
   width: 100%;
   max-width: 320px;
 }
 .brand {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
 }
 .sub {
-  margin: 8px 0 24px;
-  font-size: 13px;
+  margin: var(--space-2) 0 var(--space-6);
+  font-size: var(--text-sm);
 }
 form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .wide {
   width: 100%;
-  justify-content: center;
   height: 38px;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 .err {
-  color: var(--danger);
-  font-size: 13px;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
 }
 .hint {
-  margin-top: 16px;
-  font-size: 12px;
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
   text-align: center;
 }
 </style>
