@@ -33,6 +33,23 @@ services:
       - api
     restart: unless-stopped
 
+  # Syncthing: синхронизация папки /data/vault в твой Obsidian (на телефоне/компе).
+  syncthing:
+    image: syncthing/syncthing:latest
+    hostname: dstu-pi
+    environment:
+      - PUID=0
+      - PGID=0
+    volumes:
+      - app_data:/data
+      - syncthing_config:/var/syncthing
+    ports:
+      - "8384:8384" # веб-интерфейс (LAN)
+      - "22000:22000/tcp" # синхронизация
+      - "22000:22000/udp"
+      - "21027:21027/udp" # обнаружение в локальной сети
+    restart: unless-stopped
+
   # Cloudflare Tunnel: публичный HTTPS на dstu.zazavpn.ru -> web:80.
   # Запуск только с профилем: docker compose --profile tunnel up -d
   cloudflared:
@@ -46,6 +63,7 @@ services:
     profiles: ["tunnel"]
 
 volumes:
-  # Том с SQLite-базой и Obsidian-хранилищем.
-  # Папку /data/vault синхронизируй Syncthing'ом в свой Obsidian vault.
+  # Том с SQLite-базой и Obsidian-хранилищем (/data/vault).
   app_data:
+  # Конфиг Syncthing (ключи устройства).
+  syncthing_config:
