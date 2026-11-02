@@ -50,6 +50,22 @@ services:
       - "21027:21027/udp" # обнаружение в локальной сети
     restart: unless-stopped
 
+  # Caddy: авто-HTTPS (Let's Encrypt) напрямую, если у малинки есть входящий 80/443.
+  # Запуск: docker compose --profile caddy up -d
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+    profiles: ["caddy"]
+
   # Cloudflare Tunnel: публичный HTTPS на dstu.zazavpn.ru -> web:80.
   # Конфиг и креды в ~/.cloudflared на хосте. Запуск: docker compose --profile tunnel up -d
   cloudflared:
@@ -67,3 +83,6 @@ volumes:
   app_data:
   # Конфиг Syncthing (ключи устройства).
   syncthing_config:
+  # Сертификаты/состояние Caddy.
+  caddy_data:
+  caddy_config:

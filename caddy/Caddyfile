@@ -1,0 +1,7 @@
+# Caddy: авто-HTTPS (Let's Encrypt) + reverse-proxy на панель.
+# Хостнейм через sslip.io кодирует публичный IP (81.24.94.8 -> 81.24.94.8.sslip.io).
+# Требует входящие TCP 80 и 443 (проброс на малинку).
+
+81.24.94.8.sslip.io {
+    reverse_proxy web:80
+}
