@@ -1,0 +1,5 @@
+# Конфиг Cloudflare Worker — реверс-прокси к Telegram Bot API.
+# Деплой из этого репозитория: npx wrangler deploy
+name = "dstu-assistant"
+main = "deploy/cloudflare-worker.js"
+compatibility_date = "2024-11-01"
