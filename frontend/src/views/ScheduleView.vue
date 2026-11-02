@@ -115,7 +115,16 @@ onMounted(load);
 
 <style scoped>
 .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 22px;
+}
+@media (max-width: 759px) {
+  .head {
+    flex-wrap: wrap;
+  }
 }
 .toggle {
   display: inline-flex;

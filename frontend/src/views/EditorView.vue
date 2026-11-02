@@ -186,6 +186,9 @@ h2 {
   font-weight: 600;
 }
 .sec {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 28px 0 14px;
 }
 .form {

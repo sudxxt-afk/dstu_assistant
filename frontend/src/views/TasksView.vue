@@ -64,6 +64,10 @@ onMounted(load);
 
 <style scoped>
 .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 20px;
 }
 h1 {
@@ -89,6 +93,18 @@ h1 {
 }
 .due {
   max-width: 150px;
+}
+@media (max-width: 759px) {
+  .addbar {
+    flex-wrap: wrap;
+  }
+  .addbar > input:first-child {
+    flex: 1 1 100%;
+  }
+  .due {
+    max-width: none;
+    flex: 1;
+  }
 }
 .list {
   display: flex;

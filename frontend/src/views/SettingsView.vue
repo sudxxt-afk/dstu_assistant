@@ -165,5 +165,8 @@ h2 {
   .grid {
     grid-template-columns: 1fr;
   }
+  .bell input {
+    max-width: none;
+  }
 }
 </style>

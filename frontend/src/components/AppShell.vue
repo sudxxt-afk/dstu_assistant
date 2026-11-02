@@ -51,7 +51,8 @@ onMounted(async () => {
 
     <nav class="tabbar">
       <router-link v-for="n in nav" :key="n.to" :to="n.to" class="tab">
-        <Icon :name="n.icon" :size="20" />
+        <Icon :name="n.icon" :size="21" />
+        <span>{{ n.label }}</span>
       </router-link>
     </nav>
   </div>
@@ -83,9 +84,6 @@ onMounted(async () => {
     height: 100vh;
     border-right: 1px solid var(--line);
     padding: 20px 14px;
-  }
-  .tabbar {
-    display: none;
   }
 }
 
@@ -142,32 +140,43 @@ nav {
   color: var(--danger);
 }
 
-/* ---------- нижняя навигация (мобила) ---------- */
+/* ---------- нижняя навигация (только мобила) ---------- */
 .tabbar {
+  display: none; /* на десктопе скрыта; показывается только на узком экране */
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
   justify-content: space-around;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
-  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  padding: 7px 0 calc(6px + env(safe-area-inset-bottom));
   z-index: 10;
 }
 .tab {
   display: flex;
-  padding: 8px 18px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  padding: 4px 2px;
   color: var(--fg-3);
-  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 500;
+  transition: color 0.12s var(--ease);
 }
 .tab.router-link-active {
   color: var(--accent);
 }
+
 @media (max-width: 759px) {
+  .tabbar {
+    display: flex;
+  }
   .content {
-    padding: 18px 16px calc(80px + env(safe-area-inset-bottom));
+    padding: calc(16px + env(safe-area-inset-top)) 16px
+      calc(74px + env(safe-area-inset-bottom));
   }
 }
 </style>
