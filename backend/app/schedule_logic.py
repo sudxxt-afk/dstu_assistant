@@ -34,10 +34,20 @@ class ResolvedLesson:
     note: str | None = None
 
 
+def _week_index(date: dt.date, cfg: Config) -> int:
+    """Индекс учебной недели (0-based), выровненный по понедельнику.
+    Чтобы чётность и номер были одинаковы для всех дней одной недели (Пн–Вс),
+    даже если семестр начался в середине недели."""
+    start_monday = cfg.semester_start - dt.timedelta(
+        days=cfg.semester_start.isoweekday() - 1
+    )
+    date_monday = date - dt.timedelta(days=date.isoweekday() - 1)
+    return (date_monday - start_monday).days // 7
+
+
 def week_parity(date: dt.date, cfg: Config) -> str:
     """Вернёт 'odd' или 'even' для заданной даты относительно начала семестра."""
-    week_index = (date - cfg.semester_start).days // 7
-    same_as_first = week_index % 2 == 0
+    same_as_first = _week_index(date, cfg) % 2 == 0
     first_is_odd = cfg.week1_is_odd
     is_odd = first_is_odd if same_as_first else (not first_is_odd)
     return "odd" if is_odd else "even"
@@ -45,7 +55,7 @@ def week_parity(date: dt.date, cfg: Config) -> str:
 
 def week_number(date: dt.date, cfg: Config) -> int:
     """Номер учебной недели (1-based)."""
-    return (date - cfg.semester_start).days // 7 + 1
+    return _week_index(date, cfg) + 1
 
 
 async def resolve_day(session: AsyncSession, date: dt.date) -> list[ResolvedLesson]:
