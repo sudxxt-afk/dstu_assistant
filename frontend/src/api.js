@@ -1,4 +1,5 @@
-const DEFAULT_BASE = `${location.protocol}//${location.hostname}:8000/api`;
+// Один ориджин: nginx проксирует /api на бэкенд. Работает и по LAN, и по HTTPS.
+const DEFAULT_BASE = "/api";
 
 export const apiBase = () => localStorage.getItem("api_base") || DEFAULT_BASE;
 export const getToken = () => localStorage.getItem("api_token") || "";
