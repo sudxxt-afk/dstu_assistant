@@ -25,6 +25,14 @@ services:
       - api
     restart: unless-stopped
 
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   # Том с SQLite-базой и Obsidian-хранилищем.
   # Папку /data/vault синхронизируй Syncthing'ом в свой Obsidian vault.
