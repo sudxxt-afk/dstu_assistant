@@ -58,6 +58,8 @@ services:
     environment:
       - TS_USERSPACE=true
       - TS_STATE_DIR=/var/lib/tailscale
+      - TS_AUTHKEY=${TS_AUTHKEY:-}
+      - TS_EXTRA_ARGS=--hostname=dstu
     volumes:
       - tailscale_state:/var/lib/tailscale
     depends_on:
