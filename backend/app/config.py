@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     # Кастомный адрес Telegram Bot API (напр. Cloudflare Worker-прокси).
     # Пусто -> штатный api.telegram.org.
     telegram_api_base: str = ""
+    # Пароль для входа в веб-панель (обменивается на api_token через /auth/login).
+    panel_password: str = ""
 
     @field_validator("allowed_user_id", mode="before")
     @classmethod

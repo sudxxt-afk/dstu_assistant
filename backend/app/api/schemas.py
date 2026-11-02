@@ -5,6 +5,11 @@ import datetime as dt
 from pydantic import BaseModel
 
 
+# --- Auth ---
+class LoginIn(BaseModel):
+    password: str
+
+
 # --- Config ---
 class ConfigIn(BaseModel):
     semester_start: dt.date

@@ -17,7 +17,19 @@ from ..schedule_logic import (
     week_parity,
 )
 from . import schemas as s
+from ..config import settings
 from .deps import get_session, require_token
+
+# Публичный роутер логина — без X-API-Token.
+auth_router = APIRouter()
+
+
+@auth_router.post("/auth/login")
+async def login(body: s.LoginIn):
+    if settings.panel_password and body.password == settings.panel_password:
+        return {"token": settings.api_token}
+    raise HTTPException(status_code=401, detail="Неверный пароль")
+
 
 router = APIRouter(dependencies=[Depends(require_token)])
 

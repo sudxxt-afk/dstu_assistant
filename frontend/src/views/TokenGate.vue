@@ -1,25 +1,21 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { api, setToken, setBase } from "../api";
+import { login } from "../api";
 
 const router = useRouter();
-const token = ref("");
-const base = ref(localStorage.getItem("api_base") || "");
+const password = ref("");
 const err = ref("");
 const busy = ref(false);
 
 async function submit() {
   err.value = "";
   busy.value = true;
-  setBase(base.value.trim());
-  setToken(token.value.trim());
   try {
-    await api.get("/subjects");
+    await login(password.value);
     router.push("/schedule");
   } catch (e) {
-    err.value =
-      e.status === 401 ? "Неверный токен" : "Нет связи с API: " + (e.message || "");
+    err.value = e.status === 401 ? "Неверный пароль" : "Нет связи с API";
   } finally {
     busy.value = false;
   }
@@ -30,21 +26,18 @@ async function submit() {
   <div class="gate">
     <div class="box">
       <div class="brand">dstu<span class="dim">/assistant</span></div>
-      <p class="muted sub">Вставь API-токен, чтобы подключить панель к боту.</p>
+      <p class="muted sub">Вход в панель.</p>
       <form @submit.prevent="submit">
         <div class="field">
-          <label>API-токен</label>
-          <input v-model="token" class="mono" type="password" placeholder="X-API-Token" autofocus />
-        </div>
-        <div class="field">
-          <label>Адрес API <span class="dim">(необязательно)</span></label>
-          <input v-model="base" class="mono" placeholder="http://192.168.0.174:8000/api" />
+          <label>Пароль</label>
+          <input v-model="password" type="password" placeholder="••••••" autofocus />
         </div>
         <div v-if="err" class="err">{{ err }}</div>
         <button class="btn btn-primary wide" :disabled="busy">
           {{ busy ? "Проверяю…" : "Войти" }}
         </button>
       </form>
+      <p class="hint dim">Вход запомнится на этом устройстве.</p>
     </div>
   </div>
 </template>
@@ -58,7 +51,7 @@ async function submit() {
 }
 .box {
   width: 100%;
-  max-width: 360px;
+  max-width: 320px;
 }
 .brand {
   font-size: 22px;
@@ -83,5 +76,10 @@ form {
 .err {
   color: var(--danger);
   font-size: 13px;
+}
+.hint {
+  margin-top: 16px;
+  font-size: 12px;
+  text-align: center;
 }
 </style>

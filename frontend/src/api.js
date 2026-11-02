@@ -18,6 +18,17 @@ async function req(method, path, body) {
   return txt ? JSON.parse(txt) : null;
 }
 
+export async function login(password) {
+  const res = await fetch(apiBase() + "/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) throw { status: res.status };
+  const d = await res.json();
+  setToken(d.token);
+}
+
 export const api = {
   get: (p) => req("GET", p),
   post: (p, b) => req("POST", p, b),
