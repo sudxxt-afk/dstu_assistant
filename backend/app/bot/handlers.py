@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 
 from aiogram import F, Router
@@ -32,11 +33,17 @@ class AddTask(StatesGroup):
 
 
 # ---------------- helpers ----------------
-async def _edit(cb: CallbackQuery, text: str, markup) -> None:
-    try:
-        await cb.message.edit_text(text, reply_markup=markup)
-    except TelegramBadRequest:
-        pass  # "message is not modified" и т.п. — игнорируем
+async def _respond(cb: CallbackQuery, text: str, markup, toast: str | None = None) -> None:
+    """Параллельно отвечает на нажатие (убирает «часики») и правит сообщение.
+    Два запроса к Telegram идут одновременно -> вдвое быстрее по ощущениям."""
+
+    async def _do_edit():
+        try:
+            await cb.message.edit_text(text, reply_markup=markup)
+        except TelegramBadRequest:
+            pass  # "message is not modified" и т.п.
+
+    await asyncio.gather(cb.answer(toast) if toast else cb.answer(), _do_edit())
 
 
 async def _day_text(date: dt.date) -> str:
@@ -98,36 +105,31 @@ async def start(message: Message, state: FSMContext):
 @router.callback_query(F.data == "nav:today")
 async def nav_today(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _edit(cb, await _day_text(today_local()), kb.dashboard())
-    await cb.answer()
+    await _respond(cb, await _day_text(today_local()), kb.dashboard())
 
 
 @router.callback_query(F.data == "nav:tomorrow")
 async def nav_tomorrow(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _edit(cb, await _day_text(today_local() + dt.timedelta(days=1)), kb.dashboard())
-    await cb.answer()
+    await _respond(cb, await _day_text(today_local() + dt.timedelta(days=1)), kb.dashboard())
 
 
 @router.callback_query(F.data == "nav:week")
 async def nav_week(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _edit(cb, await _week_text(today_local()), kb.dashboard())
-    await cb.answer()
+    await _respond(cb, await _week_text(today_local()), kb.dashboard())
 
 
 @router.callback_query(F.data == "nav:next")
 async def nav_next(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _edit(cb, await _next_text(), kb.dashboard())
-    await cb.answer()
+    await _respond(cb, await _next_text(), kb.dashboard())
 
 
 @router.callback_query(F.data == "menu:home")
 async def go_home(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _edit(cb, DASHBOARD_TEXT, kb.dashboard())
-    await cb.answer()
+    await _respond(cb, DASHBOARD_TEXT, kb.dashboard())
 
 
 # ---------------- Лекция ----------------
@@ -147,10 +149,9 @@ async def menu_lecture(cb: CallbackQuery, state: FSMContext):
             await db.execute(select(Subject).order_by(Subject.name))
         ).scalars().all()
     if not subjects:
-        await _edit(cb, "Нет предметов для записи.", kb.back_kb())
+        await _respond(cb, "Нет предметов для записи.", kb.back_kb())
     else:
-        await _edit(cb, "✍️ По какому предмету записать лекцию?", kb.subjects_kb(subjects, "lec"))
-    await cb.answer()
+        await _respond(cb, "✍️ По какому предмету записать лекцию?", kb.subjects_kb(subjects, "lec"))
 
 
 @router.callback_query(F.data.startswith("lec:"))
@@ -178,8 +179,7 @@ async def pick_subject(cb: CallbackQuery, state: FSMContext):
         msg_id=cb.message.message_id,
         chat_id=cb.message.chat.id,
     )
-    await _edit(cb, _capture_status(subj.name, 0, 0), kb.capture_kb())
-    await cb.answer()
+    await _respond(cb, _capture_status(subj.name, 0, 0), kb.capture_kb())
 
 
 async def _refresh_capture(bot, data: dict) -> None:
@@ -262,17 +262,18 @@ async def cap_done(cb: CallbackQuery, state: FSMContext):
         data["subject_name"], date, data.get("pair"), content, data["attach_rels"]
     )
     await state.clear()
-    await _edit(
-        cb, f"💾 Лекция по <b>{data['subject_name']}</b> сохранена в Obsidian.", kb.back_kb()
+    await _respond(
+        cb,
+        f"💾 Лекция по <b>{data['subject_name']}</b> сохранена в Obsidian.",
+        kb.back_kb(),
+        toast="Сохранено",
     )
-    await cb.answer("Сохранено")
 
 
 @router.callback_query(F.data == "cap:cancel")
 async def cap_cancel(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _edit(cb, DASHBOARD_TEXT, kb.dashboard())
-    await cb.answer("Отменено")
+    await _respond(cb, DASHBOARD_TEXT, kb.dashboard(), toast="Отменено")
 
 
 # ---------------- Задачи ----------------
@@ -291,8 +292,7 @@ def _tasks_header(tasks: list) -> str:
 async def menu_tasks(cb: CallbackQuery, state: FSMContext):
     await state.clear()
     tasks = await _tasks()
-    await _edit(cb, _tasks_header(tasks), kb.tasks_kb(tasks))
-    await cb.answer()
+    await _respond(cb, _tasks_header(tasks), kb.tasks_kb(tasks))
 
 
 @router.callback_query(F.data.startswith("task:toggle:"))
@@ -304,8 +304,7 @@ async def task_toggle(cb: CallbackQuery):
             t.done = not t.done
             await db.commit()
     tasks = await _tasks()
-    await _edit(cb, _tasks_header(tasks), kb.tasks_kb(tasks))
-    await cb.answer("Готово")
+    await _respond(cb, _tasks_header(tasks), kb.tasks_kb(tasks), toast="Готово")
 
 
 @router.callback_query(F.data.startswith("task:del:"))
@@ -317,21 +316,19 @@ async def task_del(cb: CallbackQuery):
             await db.delete(t)
             await db.commit()
     tasks = await _tasks()
-    await _edit(cb, _tasks_header(tasks), kb.tasks_kb(tasks))
-    await cb.answer("Удалено")
+    await _respond(cb, _tasks_header(tasks), kb.tasks_kb(tasks), toast="Удалено")
 
 
 @router.callback_query(F.data == "task:add")
 async def task_add(cb: CallbackQuery, state: FSMContext):
     await state.set_state(AddTask.waiting)
     await state.update_data(msg_id=cb.message.message_id, chat_id=cb.message.chat.id)
-    await _edit(
+    await _respond(
         cb,
         "➕ Напиши задачу. Можно с дедлайном через «|»:\n"
         "<code>Сдать лабу по физике | 2026-11-20</code>",
         kb.back_kb(),
     )
-    await cb.answer()
 
 
 @router.message(AddTask.waiting, F.text)
@@ -379,8 +376,7 @@ async def menu_settings(cb: CallbackQuery, state: FSMContext):
         f"Утренний бриф: {cfg.morning_brief_time}\n"
         "Вечерняя рассылка: 20:00 (на завтра)"
     )
-    await _edit(cb, text, kb.back_kb())
-    await cb.answer()
+    await _respond(cb, text, kb.back_kb())
 
 
 # ---------------- фолбэк (регистрируется последним) ----------------
