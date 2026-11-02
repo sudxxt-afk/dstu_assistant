@@ -1,47 +1,46 @@
 from __future__ import annotations
 
-from aiogram.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
-)
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-# Тексты кнопок главного меню (используются и как роутинг в хендлерах).
-BTN_TODAY = "📅 Сегодня"
-BTN_TOMORROW = "📅 Завтра"
-BTN_WEEK = "📆 Неделя"
-BTN_NEXT = "⏭ Следующая"
-BTN_LECTURE = "📝 Лекция"
-BTN_TASKS = "✅ Задачи"
-BTN_SETTINGS = "⚙️ Настройки"
+HOME_BTN = InlineKeyboardButton(text="⬅️ Меню", callback_data="menu:home")
 
 
-def main_menu() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=BTN_TODAY), KeyboardButton(text=BTN_TOMORROW)],
-            [KeyboardButton(text=BTN_WEEK), KeyboardButton(text=BTN_NEXT)],
-            [KeyboardButton(text=BTN_LECTURE), KeyboardButton(text=BTN_TASKS)],
-            [KeyboardButton(text=BTN_SETTINGS)],
-        ],
-        resize_keyboard=True,
+def dashboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📅 Сегодня", callback_data="nav:today"),
+                InlineKeyboardButton(text="📅 Завтра", callback_data="nav:tomorrow"),
+            ],
+            [
+                InlineKeyboardButton(text="📆 Неделя", callback_data="nav:week"),
+                InlineKeyboardButton(text="⏭ Следующая", callback_data="nav:next"),
+            ],
+            [
+                InlineKeyboardButton(text="📝 Лекция", callback_data="menu:lecture"),
+                InlineKeyboardButton(text="✅ Задачи", callback_data="menu:tasks"),
+            ],
+            [InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings")],
+        ]
     )
 
 
 def subjects_kb(subjects: list, prefix: str) -> InlineKeyboardMarkup:
-    """Инлайн-кнопки предметов. callback_data = f'{prefix}:{id}'."""
     rows = [
         [InlineKeyboardButton(text=s.name, callback_data=f"{prefix}:{s.id}")]
         for s in subjects
     ]
+    rows.append([HOME_BTN])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def capture_done_kb() -> InlineKeyboardMarkup:
+def capture_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="✅ Готово", callback_data="cap:done")]
+            [
+                InlineKeyboardButton(text="💾 Готово", callback_data="cap:done"),
+                InlineKeyboardButton(text="✖️ Отмена", callback_data="cap:cancel"),
+            ]
         ]
     )
 
@@ -58,5 +57,14 @@ def tasks_kb(tasks: list) -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🗑", callback_data=f"task:del:{t.id}"),
             ]
         )
-    rows.append([InlineKeyboardButton(text="➕ Добавить", callback_data="task:add")])
+    rows.append(
+        [
+            InlineKeyboardButton(text="➕ Добавить", callback_data="task:add"),
+            HOME_BTN,
+        ]
+    )
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def back_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[HOME_BTN]])

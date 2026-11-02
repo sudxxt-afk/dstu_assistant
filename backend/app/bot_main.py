@@ -51,8 +51,11 @@ class AccessMiddleware(BaseMiddleware):
 
 # --- Планировщик: защита от повторной отправки в ту же минуту ---
 _sent_brief: set[str] = set()
+_sent_evening: set[str] = set()
 _sent_reminders: set[tuple[str, int]] = set()
 _current_day: str | None = None
+
+EVENING_TIME = "20:00"  # ежедневная рассылка расписания на завтра
 
 
 async def _tick(bot: Bot):
@@ -67,6 +70,7 @@ async def _tick(bot: Bot):
     if _current_day != today.isoformat():
         _current_day = today.isoformat()
         _sent_brief.clear()
+        _sent_evening.clear()
         _sent_reminders.clear()
 
     async with async_session() as db:
@@ -94,6 +98,22 @@ async def _tick(bot: Bot):
             except Exception as e:  # noqa: BLE001
                 log.warning("brief failed: %s", e)
             _sent_brief.add(today.isoformat())
+
+        # Вечерняя рассылка расписания на завтра (20:00)
+        if hhmm == EVENING_TIME and today.isoformat() not in _sent_evening:
+            tomorrow = today + dt.timedelta(days=1)
+            t_lessons = await resolve_day(db, tomorrow)
+            text = "🌙 <b>Расписание на завтра</b>\n\n" + render_day(
+                tomorrow,
+                t_lessons,
+                week_number(tomorrow, cfg),
+                week_parity(tomorrow, cfg),
+            )
+            try:
+                await bot.send_message(settings.allowed_user_id, text)
+            except Exception as e:  # noqa: BLE001
+                log.warning("evening failed: %s", e)
+            _sent_evening.add(today.isoformat())
 
         # Напоминания перед парой
         for ls in lessons:
