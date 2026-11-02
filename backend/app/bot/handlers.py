@@ -13,8 +13,14 @@ from sqlalchemy import select
 
 from .. import obsidian
 from ..db import async_session
-from ..models import Attachment, Config, LectureNote, Subject, Task
-from ..schedule_logic import resolve_day, week_number, week_parity
+from ..models import Attachment, LectureNote, Subject, Task
+from ..schedule_logic import (
+    get_config,
+    resolve_day,
+    resolve_week,
+    week_number,
+    week_parity,
+)
 from ..timeutil import at, now_local, today_local
 from . import keyboards as kb
 from .render import render_day, render_week
@@ -48,7 +54,7 @@ async def _respond(cb: CallbackQuery, text: str, markup, toast: str | None = Non
 
 async def _day_text(date: dt.date) -> str:
     async with async_session() as db:
-        cfg = await db.get(Config, 1)
+        cfg = await get_config(db)
         lessons = await resolve_day(db, date)
         wk = week_number(date, cfg) if cfg else None
         par = week_parity(date, cfg) if cfg else None
@@ -58,12 +64,9 @@ async def _day_text(date: dt.date) -> str:
 async def _week_text(base: dt.date) -> str:
     monday = base - dt.timedelta(days=base.isoweekday() - 1)
     async with async_session() as db:
-        cfg = await db.get(Config, 1)
+        cfg = await get_config(db)
         wk = week_number(monday, cfg) if cfg else 0
-        days = [
-            (monday + dt.timedelta(days=i), await resolve_day(db, monday + dt.timedelta(days=i)))
-            for i in range(6)  # Пн–Сб
-        ]
+        days = await resolve_week(db, monday)
     return render_week(days, wk)
 
 
@@ -366,7 +369,7 @@ async def menu_settings(cb: CallbackQuery, state: FSMContext):
     await state.clear()
     today = today_local()
     async with async_session() as db:
-        cfg = await db.get(Config, 1)
+        cfg = await get_config(db)
     parity = {"odd": "нечётная", "even": "чётная"}[week_parity(today, cfg)]
     text = (
         "⚙️ <b>Настройки</b>\n\n"

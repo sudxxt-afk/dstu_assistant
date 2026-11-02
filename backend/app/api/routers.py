@@ -7,7 +7,15 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import models as m
-from ..schedule_logic import WEEKDAY_RU, resolve_day, week_number, week_parity
+from ..schedule_logic import (
+    WEEKDAY_RU,
+    get_config,
+    invalidate_cache,
+    resolve_day,
+    resolve_week,
+    week_number,
+    week_parity,
+)
 from . import schemas as s
 from .deps import get_session, require_token
 
@@ -32,6 +40,7 @@ async def put_config(body: s.ConfigIn, db: AsyncSession = Depends(get_session)):
     for k, v in body.model_dump().items():
         setattr(cfg, k, v)
     await db.commit()
+    invalidate_cache()
     return cfg
 
 
@@ -50,6 +59,7 @@ async def put_bells(body: list[s.BellIn], db: AsyncSession = Depends(get_session
     for b in body:
         db.add(m.BellSchedule(**b.model_dump()))
     await db.commit()
+    invalidate_cache()
     return body
 
 
@@ -202,7 +212,7 @@ async def delete_task(tid: int, db: AsyncSession = Depends(get_session)):
 
 # ---------------- Schedule ----------------
 async def _day_payload(db: AsyncSession, date: dt.date) -> s.DayOut:
-    cfg = await db.get(m.Config, 1)
+    cfg = await get_config(db)
     lessons = await resolve_day(db, date)
     return s.DayOut(
         date=date,
@@ -226,4 +236,15 @@ async def schedule_week(
 ):
     base = date or dt.date.today()
     monday = base - dt.timedelta(days=base.isoweekday() - 1)
-    return [await _day_payload(db, monday + dt.timedelta(days=i)) for i in range(7)]
+    cfg = await get_config(db)
+    days = await resolve_week(db, monday, days=7)
+    return [
+        s.DayOut(
+            date=d,
+            weekday=WEEKDAY_RU[d.isoweekday()],
+            week_number=week_number(d, cfg) if cfg else 0,
+            parity=week_parity(d, cfg) if cfg else "odd",
+            lessons=[s.ResolvedOut(**vars(x)) for x in lessons],
+        )
+        for d, lessons in days
+    ]

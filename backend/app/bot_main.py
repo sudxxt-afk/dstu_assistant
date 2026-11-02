@@ -19,11 +19,12 @@ from .bot.handlers import router
 from .bot.render import render_day
 from .config import settings
 from .db import async_session, init_db
-from .models import Config, Task
-from .schedule_logic import resolve_day, week_number, week_parity
+from .models import Task
+from .schedule_logic import get_config, resolve_day, week_number, week_parity
 from .timeutil import at, now_local, today_local
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)  # не спамить каждую минуту
 log = logging.getLogger("bot")
 
 
@@ -74,7 +75,7 @@ async def _tick(bot: Bot):
         _sent_reminders.clear()
 
     async with async_session() as db:
-        cfg = await db.get(Config, 1)
+        cfg = await get_config(db)
         if not cfg:
             return
         lessons = await resolve_day(db, today)
