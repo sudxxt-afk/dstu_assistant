@@ -49,7 +49,15 @@ async def _respond(cb: CallbackQuery, text: str, markup, toast: str | None = Non
         except TelegramBadRequest:
             pass  # "message is not modified" и т.п.
 
-    await asyncio.gather(cb.answer(toast) if toast else cb.answer(), _do_edit())
+    async def _do_answer():
+        try:
+            await cb.answer(toast) if toast else await cb.answer()
+        except TelegramBadRequest:
+            pass
+
+    # Оба в корутины-обёртки: передавать сырой cb.answer() в gather нельзя
+    # (aiogram-объект нехешируемый -> TypeError в gather).
+    await asyncio.gather(_do_edit(), _do_answer())
 
 
 async def _day_text(date: dt.date) -> str:

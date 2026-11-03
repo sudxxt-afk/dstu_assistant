@@ -56,17 +56,12 @@ services:
     image: tailscale/tailscale:latest
     hostname: dstu
     environment:
-      - TS_USERSPACE=false
+      - TS_USERSPACE=true
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_AUTHKEY=${TS_AUTHKEY:-}
       - TS_EXTRA_ARGS=--hostname=dstu
     volumes:
       - tailscale_state:/var/lib/tailscale
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
     depends_on:
       - web
     restart: unless-stopped
