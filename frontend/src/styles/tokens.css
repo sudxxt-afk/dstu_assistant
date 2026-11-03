@@ -1,67 +1,149 @@
 /* ============================================================
-   DSTU Assistant — Design Tokens
+   DSTU Assistant — Design Tokens (v3, палитра Anthropic)
    Единственный источник правды для визуального языка.
-   Тёмная тема, один акцент (циан). Правь значения ТОЛЬКО здесь.
+   Бумажная тёплая нейтраль + терракотовый акцент (Crail),
+   вторичные: синий, зелёный. Без градиентов и свечения.
+   Правь значения ТОЛЬКО здесь.
    ============================================================ */
+
+/* ---------- Светлая тема (по умолчанию) ---------- */
 :root {
-  /* ---------- Цвет: поверхности ---------- */
-  --color-canvas: #0b0c0e; /* фон приложения */
-  --color-surface: #131417; /* карточки, строки, поля */
-  --color-surface-hover: #17191d;
-  --color-raised: #191b1f; /* оверлеи, диалоги */
+  color-scheme: light;
 
-  /* ---------- Цвет: границы ---------- */
-  --color-border-subtle: #1c1f23;
-  --color-border: #23262b;
-  --color-border-strong: #2e3238;
+  --color-canvas: #faf9f5; /* Anthropic Ivory */
+  --color-surface: #ffffff;
+  --color-surface-hover: #f5f4ee;
+  --color-raised: #ffffff;
+  --color-sunken: #f0eee6;
 
-  /* ---------- Цвет: текст ---------- */
-  --color-text: #e6e7e9;
-  --color-text-secondary: #878c94;
-  --color-text-tertiary: #565b63;
-  --color-text-disabled: #3c4046;
+  --color-border-subtle: #ece9df;
+  --color-border: #e3e0d4;
+  --color-border-strong: #cfccbf;
 
-  /* ---------- Цвет: акцент (циан) ---------- */
-  --color-accent: #2dd4bf;
-  --color-accent-hover: #4ee0ce;
-  --color-accent-soft: rgba(45, 212, 191, 0.1);
-  --color-accent-border: rgba(45, 212, 191, 0.35);
-  --color-on-accent: #061412; /* текст на акцентной заливке */
+  --color-text: #141413; /* Anthropic Dark */
+  --color-text-secondary: #5e5d59;
+  --color-text-tertiary: #83827b;
+  --color-text-disabled: #b0aea5; /* Anthropic Mid Gray */
 
-  /* ---------- Цвет: статусы ---------- */
-  --color-danger: #e5534b;
-  --color-danger-soft: rgba(229, 83, 75, 0.12);
-  --color-success: var(--color-accent);
-  --color-warning: #e3b341;
-  --color-focus-ring: var(--color-accent-soft);
+  --color-accent: #c15f3c; /* Crail; на белом 4.5:1 */
+  --color-accent-hover: #a94e2e;
+  --color-accent-soft: rgba(193, 95, 60, 0.1);
+  --color-accent-border: rgba(193, 95, 60, 0.4);
+  --color-on-accent: #ffffff;
 
-  /* ---------- Типографика ---------- */
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  --color-danger: #b3261e;
+  --color-danger-soft: rgba(179, 38, 30, 0.09);
+  --color-success: #5c7040;
+  --color-warning: #9a6a12;
+  --color-focus-ring: rgba(193, 95, 60, 0.28);
 
-  /* модульная шкала (база 14px) */
+  /* типы пар — палитра Anthropic */
+  --type-lecture: #c15f3c;
+  --type-practice: #5c7040;
+  --type-lab: #4a7aa8;
+  --type-seminar: #6b6a63;
+
+  --shadow-card: none;
+  --shadow-overlay: 0 8px 28px rgba(20, 20, 19, 0.14);
+  --shadow-accent: none;
+}
+
+/* ---------- Тёмная тема ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-canvas: #141413;
+    --color-surface: #1e1d1b;
+    --color-surface-hover: #262523;
+    --color-raised: #2b2a27;
+    --color-sunken: #0f0f0e;
+    --color-border-subtle: #262523;
+    --color-border: #33322f;
+    --color-border-strong: #4a4945;
+    --color-text: #faf9f5;
+    --color-text-secondary: #b0aea5;
+    --color-text-tertiary: #87867f;
+    --color-text-disabled: #5e5d59;
+    --color-accent: #d97757;
+    --color-accent-hover: #e48a6c;
+    --color-accent-soft: rgba(217, 119, 87, 0.14);
+    --color-accent-border: rgba(217, 119, 87, 0.45);
+    --color-on-accent: #141413;
+    --color-danger: #f0877f;
+    --color-danger-soft: rgba(240, 135, 127, 0.14);
+    --color-success: #9bb07a;
+    --color-warning: #e0b055;
+    --color-focus-ring: rgba(217, 119, 87, 0.35);
+    --type-lecture: #d97757;
+    --type-practice: #9bb07a;
+    --type-lab: #6a9bcb;
+    --type-seminar: #b0aea5;
+    --shadow-overlay: 0 10px 36px rgba(0, 0, 0, 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #141413;
+  --color-surface: #1e1d1b;
+  --color-surface-hover: #262523;
+  --color-raised: #2b2a27;
+  --color-sunken: #0f0f0e;
+  --color-border-subtle: #262523;
+  --color-border: #33322f;
+  --color-border-strong: #4a4945;
+  --color-text: #faf9f5;
+  --color-text-secondary: #b0aea5;
+  --color-text-tertiary: #87867f;
+  --color-text-disabled: #5e5d59;
+  --color-accent: #d97757;
+  --color-accent-hover: #e48a6c;
+  --color-accent-soft: rgba(217, 119, 87, 0.14);
+  --color-accent-border: rgba(217, 119, 87, 0.45);
+  --color-on-accent: #141413;
+  --color-danger: #f0877f;
+  --color-danger-soft: rgba(240, 135, 127, 0.14);
+  --color-success: #9bb07a;
+  --color-warning: #e0b055;
+  --color-focus-ring: rgba(217, 119, 87, 0.35);
+  --type-lecture: #d97757;
+  --type-practice: #9bb07a;
+  --type-lab: #6a9bcb;
+  --type-seminar: #b0aea5;
+  --shadow-overlay: 0 10px 36px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Не зависит от темы ---------- */
+:root {
+  /* типографика */
+  --font-sans: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* шкала (база 15px на Onest) */
   --text-2xs: 0.6875rem; /* 11 — микроподписи, теги */
   --text-xs: 0.75rem; /* 12 — лейблы, мета */
   --text-sm: 0.8125rem; /* 13 — вторичный текст */
-  --text-base: 0.875rem; /* 14 — основной текст */
-  --text-md: 0.9375rem; /* 15 — акцентный текст, названия */
-  --text-lg: 1rem; /* 16 — подзаголовки */
-  --text-xl: 1.375rem; /* 22 — заголовок страницы */
-  --text-2xl: 1.5rem; /* 24 — крупный заголовок */
+  --text-base: 0.9375rem; /* 15 — основной текст */
+  --text-md: 1rem; /* 16 — названия */
+  --text-lg: 1.125rem; /* 18 — подзаголовки */
+  --text-xl: 1.5rem; /* 24 — заголовок страницы */
+  --text-2xl: 2rem; /* 32 — крупный заголовок дня */
+  --text-3xl: 2.5rem; /* 40 — герой / бренд */
 
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  --leading-tight: 1.2;
+  --leading-tight: 1.15;
   --leading-snug: 1.35;
-  --leading-normal: 1.45;
+  --leading-normal: 1.5;
 
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
+  --tracking-caps: 0.08em;
 
-  /* ---------- Отступы: сетка 4px ---------- */
+  /* отступы: сетка 4px */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -70,37 +152,35 @@
   --space-6: 24px;
   --space-8: 32px;
   --space-10: 40px;
+  --space-12: 48px;
 
-  /* ---------- Радиусы ---------- */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  /* радиусы */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
   --radius-full: 999px;
 
-  /* ---------- Границы ---------- */
   --border-hairline: 1px;
 
-  /* ---------- Тени (тёмная тема = почти плоско) ---------- */
-  --shadow-overlay: 0 10px 34px rgba(0, 0, 0, 0.55);
-
-  /* ---------- Движение ---------- */
+  /* движение */
   --dur-fast: 120ms;
-  --dur-med: 180ms;
+  --dur-med: 200ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ---------- Слои (z-index) ---------- */
+  /* слои */
   --z-nav: 10;
   --z-overlay: 100;
   --z-toast: 200;
 
-  /* ---------- Раскладка ---------- */
-  --sidebar-w: 220px;
-  --content-max: 1040px;
-  --page-pad: 32px;
+  /* раскладка */
+  --sidebar-w: 248px;
+  --content-max: 1080px;
+  --page-pad: 40px;
+  --control-h: 40px;
   --bp-md: 760px; /* справочно; в @media указывается числом */
 
-  /* ---------- Алиасы (обратная совместимость со старым кодом) ---------- */
+  /* алиасы (обратная совместимость) */
   --bg: var(--color-canvas);
   --surface: var(--color-surface);
   --surface-2: var(--color-surface-hover);
@@ -118,4 +198,12 @@
   --sans: var(--font-sans);
   --mono: var(--font-mono);
   --ease: var(--ease-standard);
+}
+
+@media (max-width: 759px) {
+  :root {
+    --page-pad: 16px;
+    --text-2xl: 1.625rem;
+    --text-3xl: 2rem;
+  }
 }

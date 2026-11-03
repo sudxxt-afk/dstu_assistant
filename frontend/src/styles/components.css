@@ -13,23 +13,27 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: 34px;
+  height: var(--control-h);
   padding: 0 var(--space-4);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
   color: var(--color-text);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   white-space: nowrap;
   transition: border-color var(--dur-fast) var(--ease-standard),
     background var(--dur-fast) var(--ease-standard),
-    color var(--dur-fast) var(--ease-standard);
+    color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-med) var(--ease-standard);
 }
 .btn:hover {
+  background: var(--color-surface-hover);
   border-color: var(--color-text-tertiary);
 }
 .btn:active {
-  transform: translateY(0.5px);
+  transform: translateY(1px);
 }
 .btn:disabled {
   opacity: 0.5;
@@ -44,20 +48,25 @@
 .btn-primary:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
+  box-shadow: var(--shadow-accent);
 }
 .btn-ghost {
+  background: transparent;
   border-color: transparent;
+  color: var(--color-text-secondary);
 }
 .btn-ghost:hover {
-  background: var(--color-surface-hover);
+  background: var(--color-accent-soft);
   border-color: transparent;
+  color: var(--color-accent);
 }
 .btn-danger:hover {
+  background: var(--color-danger-soft);
   border-color: var(--color-danger);
   color: var(--color-danger);
 }
 .btn-sm {
-  height: 28px;
+  height: 32px;
   padding: 0 var(--space-3);
   font-size: var(--text-xs);
 }
@@ -71,10 +80,9 @@
   position: absolute;
   width: 14px;
   height: 14px;
-  border: 2px solid currentColor;
+  border: 2px solid var(--color-on-accent);
   border-top-color: transparent;
   border-radius: var(--radius-full);
-  color: var(--color-on-accent);
   animation: spin 0.6s linear infinite;
 }
 @keyframes spin {
@@ -84,27 +92,28 @@
 }
 
 /* ---------- Icon button ----------
-   .icon-btn (md 30px) · .icon-btn.sm (24px) */
+   .icon-btn (md 36px) · .icon-btn.sm (28px) */
 .icon-btn {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   transition: color var(--dur-fast) var(--ease-standard),
     background var(--dur-fast) var(--ease-standard);
 }
 .icon-btn:hover {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 .icon-btn.sm {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 .icon-btn.danger:hover {
   color: var(--color-danger);
+  background: var(--color-danger-soft);
 }
 
 /* ---------- Form field ----------
@@ -113,15 +122,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 .field > label {
   font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
 input,
 select,
 textarea {
-  height: 36px;
+  height: var(--control-h);
   padding: 0 var(--space-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -130,8 +141,14 @@ textarea {
   font-family: inherit;
   font-size: var(--text-base);
   width: 100%;
+  min-width: 0;
   transition: border-color var(--dur-fast) var(--ease-standard),
     box-shadow var(--dur-fast) var(--ease-standard);
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--color-border-strong);
 }
 input::placeholder,
 textarea::placeholder {
@@ -153,22 +170,64 @@ select:disabled {
 }
 select {
   appearance: none;
-  padding-right: var(--space-6);
+  padding-right: var(--space-8);
   background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
     linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
-  background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
+}
+input[type="checkbox"] {
+  accent-color: var(--color-accent);
 }
 
 /* ---------- Card / surface ---------- */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
 }
 
-/* ---------- Tag (мета-подпись: тип пары) ---------- */
+/* ---------- Page header ---------- */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+.page-head > div:first-child {
+  min-width: 0;
+}
+
+/* ---------- Type label (тип пары) ----------
+   .type-pill + .is-lecture | .is-practice | .is-lab | .is-seminar
+   Капслок-подпись цветом типа, без заливки. */
+.type-pill {
+  --pill: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  color: var(--pill);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.type-pill.is-lecture {
+  --pill: var(--type-lecture);
+}
+.type-pill.is-practice {
+  --pill: var(--type-practice);
+}
+.type-pill.is-lab {
+  --pill: var(--type-lab);
+}
+.type-pill.is-seminar {
+  --pill: var(--type-seminar);
+}
+
+/* ---------- Tag (нейтральная мета-подпись) ---------- */
 .tag {
   font-size: var(--text-2xs);
   font-weight: var(--weight-medium);
@@ -182,31 +241,34 @@ select {
   display: inline-flex;
   align-items: center;
   font-size: var(--text-2xs);
-  font-weight: var(--weight-medium);
-  padding: 1px var(--space-2);
+  font-weight: var(--weight-semibold);
+  padding: 2px var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--color-accent);
-  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent-soft);
+  white-space: nowrap;
 }
 .badge-danger {
   color: var(--color-danger);
-  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
 }
 .badge-muted {
   color: var(--color-text-secondary);
-  border-color: var(--color-border-strong);
+  background: var(--color-sunken);
 }
 
 /* ---------- Segmented control ----------
    Переключатель из 2+ сегментов. .segmented > button, .is-active */
 .segmented {
   display: inline-flex;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  padding: 3px;
+  gap: 2px;
+  background: var(--color-sunken);
+  border-radius: var(--radius-md);
 }
 .segmented > button {
-  padding: var(--space-2) var(--space-4);
+  padding: 6px var(--space-4);
+  border-radius: calc(var(--radius-md) - 3px);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
@@ -219,31 +281,77 @@ select {
 .segmented > button.is-active {
   background: var(--color-surface);
   color: var(--color-text);
+  box-shadow: 0 0 0 1px var(--color-border);
 }
 
 /* ---------- Checkbox ---------- */
 .checkbox {
-  width: 18px;
-  height: 18px;
+  flex: none;
+  width: 22px;
+  height: 22px;
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   display: grid;
   place-items: center;
   color: var(--color-on-accent);
   transition: border-color var(--dur-fast) var(--ease-standard),
-    background var(--dur-fast) var(--ease-standard);
+    background var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 }
 .checkbox:hover {
   border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.checkbox:active {
+  transform: scale(0.92);
 }
 .checkbox.is-checked {
   background: var(--color-accent);
   border-color: var(--color-accent);
 }
 
+/* ---------- Chip (выбор дня, фильтр) ---------- */
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 52px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  color: var(--color-text-secondary);
+  transition: background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+.chip:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.chip.is-active {
+  background: var(--color-text);
+  color: var(--color-canvas);
+}
+.chip.is-today:not(.is-active) {
+  border-color: var(--color-accent-border);
+  color: var(--color-accent);
+}
+
 /* ---------- Empty state ---------- */
 .empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
   color: var(--color-text-tertiary);
   font-size: var(--text-sm);
-  padding: var(--space-6) 0;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+.empty strong {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }

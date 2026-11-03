@@ -42,7 +42,7 @@ onMounted(load);
 </script>
 
 <template>
-  <h1 class="t-h1 page">Настройки</h1>
+  <div class="page-head"><h1 class="t-h1">Настройки</h1></div>
 
   <div v-if="cfg" class="card block">
     <h2 class="t-h2">Семестр</h2>
@@ -72,7 +72,7 @@ onMounted(load);
       </div>
     </div>
     <div class="row savebar">
-      <button class="btn btn-primary btn-sm" @click="saveConfig">Сохранить</button>
+      <button class="btn btn-primary" @click="saveConfig">Сохранить</button>
       <span v-if="savedCfg" class="ok">сохранено</span>
     </div>
   </div>
@@ -92,23 +92,20 @@ onMounted(load);
       </div>
     </div>
     <div class="row savebar">
-      <button class="btn btn-primary btn-sm" @click="saveBells">Сохранить</button>
+      <button class="btn btn-primary" @click="saveBells">Сохранить</button>
       <span v-if="savedBells" class="ok">сохранено</span>
     </div>
   </div>
 </template>
 
 <style scoped>
-.page {
-  margin-bottom: var(--space-5);
-}
 .block {
-  padding: var(--space-5);
+  padding: var(--space-6);
   margin-bottom: var(--space-5);
-  max-width: 560px;
+  max-width: 600px;
 }
 .block h2 {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 .grid {
   display: grid;
@@ -121,7 +118,8 @@ onMounted(load);
 }
 .ok {
   font-size: var(--text-xs);
-  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+  color: var(--color-success);
 }
 .bells {
   display: flex;

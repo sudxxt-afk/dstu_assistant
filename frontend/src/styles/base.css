@@ -23,6 +23,16 @@ body {
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01" 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 a {
@@ -51,16 +61,20 @@ button {
 
 /* ---------- Типографические роли ---------- */
 .t-display {
+  font-family: var(--font-display);
   font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
 }
 .t-h1 {
+  font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
 }
 .t-h2 {
   font-size: var(--text-lg);
@@ -82,6 +96,13 @@ button {
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
 }
+.t-eyebrow {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
 .t-caption {
   font-size: var(--text-2xs);
   color: var(--color-text-tertiary);
@@ -90,7 +111,7 @@ button {
 /* ---------- Текстовые утилиты ---------- */
 .mono {
   font-family: var(--font-mono);
-  font-feature-settings: "tnum" 1; /* табличные цифры */
+  font-variant-numeric: tabular-nums;
 }
 .muted {
   color: var(--color-text-secondary);
@@ -122,4 +143,5 @@ button {
   background: var(--color-border-strong);
   border-radius: var(--radius-full);
   border: 3px solid var(--color-canvas);
+  background-clip: padding-box;
 }

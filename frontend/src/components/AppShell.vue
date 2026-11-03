@@ -34,17 +34,23 @@ onMounted(async () => {
 <template>
   <div class="shell">
     <aside class="sidebar">
-      <div class="brand">dstu<span class="dim">/assistant</span></div>
+      <div class="brand">
+        <span class="word">dstu<span class="dim"> assistant</span></span>
+      </div>
       <nav>
         <router-link v-for="n in nav" :key="n.to" :to="n.to" class="nav-item">
-          <Icon :name="n.icon" :size="17" />
+          <Icon :name="n.icon" :size="18" />
           <span>{{ n.label }}</span>
         </router-link>
       </nav>
       <div class="foot">
-        <div v-if="week" class="week mono">W{{ week }} · {{ parity }}</div>
+        <div v-if="week" class="weekcard">
+          <div class="t-eyebrow">Учебная неделя</div>
+          <div class="wnum">{{ week }}</div>
+          <div class="wpar">{{ parity }}</div>
+        </div>
         <button class="logout" @click="logout">
-          <Icon name="logout" :size="15" /> выйти
+          <Icon name="logout" :size="15" /> Выйти
         </button>
       </div>
     </aside>
@@ -68,8 +74,15 @@ onMounted(async () => {
   display: none;
 }
 .content {
-  padding: var(--space-8) var(--page-pad) var(--space-8);
+  padding: var(--space-10) var(--page-pad) var(--space-12);
   max-width: var(--content-max);
+  animation: rise var(--dur-med) var(--ease-out);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 @media (min-width: 760px) {
@@ -83,57 +96,85 @@ onMounted(async () => {
     position: sticky;
     top: 0;
     height: 100vh;
+    background: var(--color-surface);
     border-right: 1px solid var(--color-border);
-    padding: var(--space-5) var(--space-3);
+    padding: var(--space-6) var(--space-4);
   }
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-2) var(--space-6);
+}
+.word {
+  font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tight);
-  padding: var(--space-2) var(--space-3) var(--space-5);
+  font-weight: var(--weight-semibold);
 }
 nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
 }
 .nav-item {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
+  padding: 10px var(--space-3);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--weight-medium);
   transition: color var(--dur-fast) var(--ease-standard),
     background var(--dur-fast) var(--ease-standard);
 }
 .nav-item:hover {
   color: var(--color-text);
-  background: var(--color-surface);
+  background: var(--color-surface-hover);
 }
 .nav-item.router-link-active {
   color: var(--color-accent);
   background: var(--color-accent-soft);
+  font-weight: var(--weight-semibold);
 }
 .foot {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-4);
 }
-.week {
+.weekcard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-sunken);
+  row-gap: 2px;
+}
+.weekcard .t-eyebrow {
+  grid-column: 1 / -1;
+}
+.wnum {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+}
+.wpar {
   font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
+  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+  padding-bottom: 4px;
 }
 .logout {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  padding: 0 var(--space-2);
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
   transition: color var(--dur-fast) var(--ease-standard);
@@ -146,14 +187,16 @@ nav {
 .tabbar {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  left: max(var(--space-3), env(safe-area-inset-left, 0px));
+  right: max(var(--space-3), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
   justify-content: space-around;
-  background: color-mix(in srgb, var(--color-canvas) 90%, transparent);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--color-border);
-  padding: var(--space-2) 0 calc(var(--space-2) + env(safe-area-inset-bottom));
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   z-index: var(--z-nav);
 }
 .tab {
@@ -162,23 +205,27 @@ nav {
   align-items: center;
   gap: 3px;
   flex: 1;
-  padding: var(--space-1) 2px;
+  padding: 6px 2px;
+  border-radius: var(--radius-md);
   color: var(--color-text-tertiary);
   font-size: var(--text-2xs);
   font-weight: var(--weight-medium);
-  transition: color var(--dur-fast) var(--ease-standard);
+  transition: color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
 }
 .tab.router-link-active {
   color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 
 @media (max-width: 759px) {
   .tabbar {
     display: flex;
+    flex-direction: row;
   }
   .content {
-    padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-4)
-      calc(74px + env(safe-area-inset-bottom));
+    padding: calc(var(--space-5) + env(safe-area-inset-top, 0px)) var(--space-4)
+      calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 </style>

@@ -13,6 +13,8 @@ const PARITY = [
   { v: "odd", t: "нечётная" },
   { v: "even", t: "чётная" },
 ];
+const TYPE_CLS = { лекция: "is-lecture", практика: "is-practice", лаба: "is-lab", семинар: "is-seminar" };
+const typeCls = (t) => TYPE_CLS[t] || "";
 const parityLabel = (v) => PARITY.find((p) => p.v === v)?.t || v;
 const subjName = (id) => subjects.value.find((s) => s.id === id)?.name || "?";
 
@@ -77,7 +79,7 @@ onMounted(load);
 </script>
 
 <template>
-  <h1 class="t-h1 page">Редактор</h1>
+  <div class="page-head"><h1 class="t-h1">Редактор</h1></div>
 
   <!-- ПАРЫ -->
   <div class="sec">
@@ -138,7 +140,7 @@ onMounted(load);
         <div class="linfo">
           <div class="lname">{{ subjName(l.subject_id) }}</div>
           <div class="lmeta">
-            <span class="tag">{{ l.type }}</span>
+            <span class="type-pill" :class="typeCls(l.type)">{{ l.type }}</span>
             <span v-if="l.parity !== 'every'" class="badge">{{ parityLabel(l.parity) }}</span>
             <span v-if="l.room" class="mono dim"> · {{ l.room }}</span>
           </div>
@@ -168,17 +170,14 @@ onMounted(load);
 </template>
 
 <style scoped>
-.page {
-  margin-bottom: var(--space-2);
-}
 .sec {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: var(--space-8) 0 var(--space-4);
+  margin: var(--space-10) 0 var(--space-4);
 }
 .form {
-  padding: var(--space-4);
+  padding: var(--space-6);
   margin-bottom: var(--space-5);
 }
 .formtitle {
@@ -201,21 +200,19 @@ onMounted(load);
 
 .days {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1px;
-  background: var(--color-border);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
 }
 .day {
-  background: var(--color-canvas);
-  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
 }
 .dayhead {
-  font-size: var(--text-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  color: var(--color-text-secondary);
   margin-bottom: var(--space-3);
 }
 .lrow {
@@ -236,10 +233,10 @@ onMounted(load);
 .lmeta {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
-  margin-top: 1px;
+  margin-top: var(--space-1);
 }
 
 .subjbar {
@@ -252,8 +249,15 @@ onMounted(load);
   grid-template-columns: 1fr 1fr auto auto;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) 2px;
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.subjlist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 .sname {
   font-size: var(--text-base);

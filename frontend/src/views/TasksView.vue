@@ -26,96 +26,124 @@ async function del(t) {
   await api.del(`/tasks/${t.id}`);
   load();
 }
+const todayIso = new Date().toISOString().slice(0, 10);
+const overdue = (t) => !t.done && t.due_date && t.due_date < todayIso;
 const dm = (s) => (s ? s.slice(8, 10) + "." + s.slice(5, 7) : "");
 
 onMounted(load);
 </script>
 
 <template>
-  <div class="head spread">
-    <h1 class="t-h1">Задачи</h1>
+  <div class="page-head">
+    <div>
+      <h1 class="t-h1">Задачи</h1>
+      <div v-if="tasks.length" class="muted sub">{{ tasks.filter((t) => !t.done).length }} в работе</div>
+    </div>
     <label class="chk">
       <input type="checkbox" v-model="showDone" @change="load" />
-      <span class="muted">выполненные</span>
+      <span>Показать выполненные</span>
     </label>
   </div>
 
-  <form class="addbar" @submit.prevent="add">
-    <input v-model="title" placeholder="Новая задача…" />
-    <input v-model="due" type="date" class="mono due" />
-    <button class="btn btn-primary"><Icon name="plus" :size="16" /></button>
+  <form class="addbar card" @submit.prevent="add">
+    <input v-model="title" class="addin" placeholder="Что нужно сделать?" aria-label="Новая задача" />
+    <input v-model="due" type="date" class="mono due" aria-label="Срок" />
+    <button class="btn btn-primary" aria-label="Добавить"><Icon name="plus" :size="16" /> Добавить</button>
   </form>
 
-  <div v-if="!tasks.length" class="empty">Задач нет</div>
+  <div v-if="!tasks.length" class="empty">
+    <strong>Задач нет</strong>
+    Добавьте первую в строке выше.
+  </div>
   <div v-else class="list">
     <div v-for="t in tasks" :key="t.id" class="task" :class="{ done: t.done }">
-      <button class="checkbox" :class="{ 'is-checked': t.done }" @click="toggle(t)">
+      <button class="checkbox" :class="{ 'is-checked': t.done }" :aria-label="t.done ? 'Вернуть' : 'Выполнить'" @click="toggle(t)">
         <Icon v-if="t.done" name="check" :size="13" />
       </button>
       <div class="ttl">{{ t.title }}</div>
-      <div v-if="t.due_date" class="due-tag mono">{{ dm(t.due_date) }}</div>
-      <button class="icon-btn sm danger" @click="del(t)"><Icon name="trash" :size="15" /></button>
+      <div v-if="t.due_date" class="badge mono" :class="overdue(t) ? 'badge-danger' : 'badge-muted'">
+        {{ overdue(t) ? "просрочено · " : "" }}{{ dm(t.due_date) }}
+      </div>
+      <button class="icon-btn sm danger" aria-label="Удалить" @click="del(t)"><Icon name="trash" :size="15" /></button>
     </div>
   </div>
 </template>
 
 <style scoped>
-.head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-5);
+.sub {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
 }
 .chk {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
 .chk input {
-  width: auto;
-  height: auto;
+  width: 16px;
+  height: 16px;
 }
 .addbar {
   display: flex;
   gap: var(--space-2);
-  margin-bottom: var(--space-5);
+  padding: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+.addbar input {
+  border-color: transparent;
+  background: var(--color-sunken);
+}
+.addin {
+  flex: 1;
 }
 .due {
-  max-width: 150px;
+  max-width: 160px;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 .task {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-1);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+.task:hover {
+  border-color: var(--color-border-strong);
 }
 .ttl {
   font-size: var(--text-base);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .task.done .ttl {
   color: var(--color-text-tertiary);
   text-decoration: line-through;
-}
-.due-tag {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
 }
 
 @media (max-width: 759px) {
   .addbar {
     flex-wrap: wrap;
   }
-  .addbar > input:first-child {
+  .addin {
     flex: 1 1 100%;
   }
   .due {
     max-width: none;
     flex: 1;
+  }
+  .page-head {
+    align-items: flex-start;
   }
 }
 </style>
