@@ -2,6 +2,13 @@
 import { ref, onMounted } from "vue";
 import { api } from "../api";
 import Icon from "../components/Icon.vue";
+import { theme, setTheme } from "../theme";
+
+const THEMES = [
+  { v: "system", t: "Как в системе" },
+  { v: "light", t: "Светлая" },
+  { v: "dark", t: "Тёмная" },
+];
 
 const cfg = ref(null);
 const bells = ref([]);
@@ -43,6 +50,22 @@ onMounted(load);
 
 <template>
   <div class="page-head"><h1 class="t-h1">Настройки</h1></div>
+
+  <div class="card block">
+    <h2 class="t-h2">Оформление</h2>
+    <div class="segmented" role="radiogroup" aria-label="Тема оформления">
+      <button
+        v-for="o in THEMES"
+        :key="o.v"
+        role="radio"
+        :aria-checked="theme === o.v"
+        :class="{ 'is-active': theme === o.v }"
+        @click="setTheme(o.v)"
+      >
+        {{ o.t }}
+      </button>
+    </div>
+  </div>
 
   <div v-if="cfg" class="card block">
     <h2 class="t-h2">Семестр</h2>
