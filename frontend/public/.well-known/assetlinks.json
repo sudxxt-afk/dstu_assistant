@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "net.ts.tailb65ae3.dstu.twa",
+    "sha256_cert_fingerprints": ["D9:25:FB:71:09:D7:F0:CB:FA:0F:07:30:CD:35:41:42:3C:7A:41:89:B0:93:8E:70:A8:84:54:A1:7B:AC:31:D9"]
+  }
+}]
