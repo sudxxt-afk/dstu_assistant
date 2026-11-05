@@ -297,6 +297,9 @@ async def _load_lecture(db: AsyncSession, nid: int) -> m.LectureNote | None:
             selectinload(m.LectureNote.attachments),
         )
         .where(m.LectureNote.id == nid)
+        # Иначе identity-map вернёт объект со старой коллекцией вложений
+        # (expire_on_commit=False), и ответ после загрузки будет без нового файла.
+        .execution_options(populate_existing=True)
     )
     return (await db.execute(q)).scalar_one_or_none()
 
