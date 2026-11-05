@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     tz: str = "Europe/Moscow"
     database_url: str = "sqlite+aiosqlite:////data/app.db"
     vault_path: str = "/data/vault"
+    media_path: str = "/data/media"  # вложения лекций (нейтральное хранилище, не Obsidian)
 
 
 settings = Settings()

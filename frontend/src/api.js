@@ -30,10 +30,36 @@ export async function login(password) {
   setToken(d.token);
 }
 
+// Загрузить защищённый файл (вложение) и вернуть blob-URL для <img> / скачивания.
+async function blobUrl(path) {
+  const res = await fetch(apiBase() + path, {
+    headers: { "X-API-Token": getToken() },
+  });
+  if (!res.ok) throw { status: res.status, message: await res.text() };
+  return URL.createObjectURL(await res.blob());
+}
+
+// Загрузка файла (multipart). Content-Type ставит браузер (с boundary) — не задаём.
+async function upload(path, file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch(apiBase() + path, {
+    method: "POST",
+    headers: { "X-API-Token": getToken() },
+    body: fd,
+  });
+  if (res.status === 401) throw { status: 401, message: "Неверный токен" };
+  if (!res.ok) throw { status: res.status, message: await res.text() };
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
 export const api = {
   get: (p) => req("GET", p),
   post: (p, b) => req("POST", p, b),
   put: (p, b) => req("PUT", p, b),
   patch: (p, b) => req("PATCH", p, b),
   del: (p) => req("DELETE", p),
+  blobUrl,
+  upload,
 };

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from .. import media
 from .. import models as m
 from ..schedule_logic import (
     WEEKDAY_RU,
@@ -259,6 +262,174 @@ async def delete_task(tid: int, db: AsyncSession = Depends(get_session)):
     obj = await db.get(m.Task, tid)
     if obj:
         await db.delete(obj)
+        await db.commit()
+    return {"ok": True}
+
+
+# ---------------- Lectures ----------------
+def _attach_out(a: m.Attachment) -> s.AttachmentOut:
+    return s.AttachmentOut(
+        id=a.id,
+        kind=a.kind,
+        original_name=a.original_name,
+        url=f"/api/lectures/attachments/{a.id}/raw",
+    )
+
+
+def _lecture_out(n: m.LectureNote) -> s.LectureOut:
+    return s.LectureOut(
+        id=n.id,
+        subject_id=n.subject_id,
+        subject_name=n.subject.name if n.subject else None,
+        date=n.date,
+        pair_number=n.pair_number,
+        content_md=n.content_md,
+        created_at=n.created_at,
+        attachments=[_attach_out(a) for a in n.attachments],
+    )
+
+
+async def _load_lecture(db: AsyncSession, nid: int) -> m.LectureNote | None:
+    q = (
+        select(m.LectureNote)
+        .options(
+            selectinload(m.LectureNote.subject),
+            selectinload(m.LectureNote.attachments),
+        )
+        .where(m.LectureNote.id == nid)
+    )
+    return (await db.execute(q)).scalar_one_or_none()
+
+
+@router.get("/lectures", response_model=list[s.LectureListItem])
+async def list_lectures(
+    subject_id: int | None = None,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_session),
+):
+    q = (
+        select(m.LectureNote)
+        .options(
+            selectinload(m.LectureNote.subject),
+            selectinload(m.LectureNote.attachments),
+        )
+        .order_by(m.LectureNote.date.desc(), m.LectureNote.id.desc())
+        .limit(max(1, min(limit, 500)))
+    )
+    if subject_id:
+        q = q.where(m.LectureNote.subject_id == subject_id)
+    notes = (await db.execute(q)).scalars().all()
+    out = []
+    for n in notes:
+        preview = " ".join(n.content_md.split())[:140]
+        out.append(
+            s.LectureListItem(
+                id=n.id,
+                subject_id=n.subject_id,
+                subject_name=n.subject.name if n.subject else None,
+                date=n.date,
+                pair_number=n.pair_number,
+                preview=preview,
+                attachments=len(n.attachments),
+                created_at=n.created_at,
+            )
+        )
+    return out
+
+
+@router.get("/lectures/{nid}", response_model=s.LectureOut)
+async def get_lecture(nid: int, db: AsyncSession = Depends(get_session)):
+    n = await _load_lecture(db, nid)
+    if not n:
+        raise HTTPException(404, "Лекция не найдена")
+    return _lecture_out(n)
+
+
+@router.post("/lectures", response_model=s.LectureOut)
+async def create_lecture(body: s.LectureIn, db: AsyncSession = Depends(get_session)):
+    if not await db.get(m.Subject, body.subject_id):
+        raise HTTPException(400, "Предмет не найден")
+    obj = m.LectureNote(**body.model_dump())
+    db.add(obj)
+    await db.commit()
+    return _lecture_out(await _load_lecture(db, obj.id))
+
+
+@router.patch("/lectures/{nid}", response_model=s.LectureOut)
+async def update_lecture(
+    nid: int, body: s.LecturePatch, db: AsyncSession = Depends(get_session)
+):
+    obj = await db.get(m.LectureNote, nid)
+    if not obj:
+        raise HTTPException(404, "Лекция не найдена")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(obj, field, value)
+    await db.commit()
+    return _lecture_out(await _load_lecture(db, nid))
+
+
+@router.delete("/lectures/{nid}")
+async def delete_lecture(nid: int, db: AsyncSession = Depends(get_session)):
+    n = await _load_lecture(db, nid)
+    if n:
+        for a in n.attachments:
+            try:
+                Path(a.file_path).unlink(missing_ok=True)
+            except OSError:
+                pass
+        await db.delete(n)  # attachments уйдут каскадом
+        await db.commit()
+    return {"ok": True}
+
+
+@router.post("/lectures/{nid}/attachments", response_model=s.LectureOut)
+async def upload_attachment(
+    nid: int,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_session),
+):
+    n = await _load_lecture(db, nid)
+    if not n:
+        raise HTTPException(404, "Лекция не найдена")
+    subject_name = n.subject.name if n.subject else "Без предмета"
+    orig = file.filename or "file"
+    ext = Path(orig).suffix.lower()
+    stamp = dt.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    dest = media.media_dir(subject_name) / f"{stamp}_{orig}"
+    data = await file.read()
+    dest.write_bytes(data)
+    kind = "photo" if ext in {".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic"} else "document"
+    db.add(
+        m.Attachment(
+            note_id=nid, kind=kind, file_path=str(dest), original_name=orig
+        )
+    )
+    await db.commit()
+    return _lecture_out(await _load_lecture(db, nid))
+
+
+@router.get("/lectures/attachments/{aid}/raw")
+async def get_attachment(aid: int, db: AsyncSession = Depends(get_session)):
+    a = await db.get(m.Attachment, aid)
+    if not a:
+        raise HTTPException(404, "Вложение не найдено")
+    p = Path(a.file_path)
+    if not p.exists():
+        raise HTTPException(410, "Файл отсутствует на диске")
+    return FileResponse(
+        p, filename=a.original_name or p.name, content_disposition_type="inline"
+    )
+
+
+@router.delete("/lectures/attachments/{aid}")
+async def delete_attachment(aid: int, db: AsyncSession = Depends(get_session)):
+    a = await db.get(m.Attachment, aid)
+    if a:
+        try:
+            Path(a.file_path).unlink(missing_ok=True)
+        except OSError:
+            pass
+        await db.delete(a)
         await db.commit()
     return {"ok": True}
 

@@ -13,7 +13,7 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from .. import obsidian
+from .. import media
 from ..dateparse import parse_due
 from ..db import async_session
 from ..models import Attachment, LectureNote, Subject, Task
@@ -212,7 +212,7 @@ async def _refresh_capture(bot, data: dict) -> None:
 async def cap_photo(message: Message, state: FSMContext):
     data = await state.get_data()
     fname = f"{data['date']}_{now_local():%H%M%S}.jpg"
-    dest = obsidian.attachments_dir(data["subject_name"]) / fname
+    dest = media.media_dir(data["subject_name"]) / fname
     await message.bot.download(message.photo[-1], destination=dest)
     data["attach_rels"].append(fname)
     data["attach_db"].append({"kind": "photo", "file_path": str(dest), "orig": fname})
@@ -227,7 +227,7 @@ async def cap_document(message: Message, state: FSMContext):
     data = await state.get_data()
     orig = message.document.file_name or "file"
     fname = f"{data['date']}_{now_local():%H%M%S}_{orig}"
-    dest = obsidian.attachments_dir(data["subject_name"]) / fname
+    dest = media.media_dir(data["subject_name"]) / fname
     await message.bot.download(message.document, destination=dest)
     data["attach_rels"].append(fname)
     data["attach_db"].append({"kind": "document", "file_path": str(dest), "orig": orig})
@@ -272,13 +272,13 @@ async def cap_done(cb: CallbackQuery, state: FSMContext):
                 )
             )
         await db.commit()
-    obsidian.append_lecture(
-        data["subject_name"], date, data.get("pair"), content, data["attach_rels"]
-    )
     await state.clear()
+    n_att = len(data["attach_rels"])
+    extra = f" · вложений: {n_att}" if n_att else ""
     await _respond(
         cb,
-        f"💾 Лекция по <b>{data['subject_name']}</b> сохранена в Obsidian.",
+        f"💾 Лекция по <b>{data['subject_name']}</b> сохранена{extra}.\n"
+        f"Открыть и дополнить можно в веб-панели → Лекции.",
         kb.back_kb(),
         toast="Сохранено",
     )

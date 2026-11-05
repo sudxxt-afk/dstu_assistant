@@ -6,6 +6,7 @@ const routes = [
   { path: "/", redirect: "/schedule" },
   { path: "/schedule", component: () => import("./views/ScheduleView.vue") },
   { path: "/tasks", component: () => import("./views/TasksView.vue") },
+  { path: "/lectures", component: () => import("./views/LecturesView.vue") },
   { path: "/editor", component: () => import("./views/EditorView.vue") },
   { path: "/settings", component: () => import("./views/SettingsView.vue") },
 ];

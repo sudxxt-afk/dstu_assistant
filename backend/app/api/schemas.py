@@ -94,6 +94,50 @@ class TaskOut(TaskIn):
     subject_name: str | None = None
 
 
+# --- Lectures ---
+class AttachmentOut(BaseModel):
+    id: int
+    kind: str  # photo / document
+    original_name: str | None
+    url: str
+
+
+class LectureIn(BaseModel):
+    subject_id: int
+    date: dt.date
+    pair_number: int | None = None
+    content_md: str = ""
+
+
+class LecturePatch(BaseModel):
+    subject_id: int | None = None
+    date: dt.date | None = None
+    pair_number: int | None = None
+    content_md: str | None = None
+
+
+class LectureListItem(BaseModel):
+    id: int
+    subject_id: int
+    subject_name: str | None
+    date: dt.date
+    pair_number: int | None
+    preview: str
+    attachments: int
+    created_at: dt.datetime
+
+
+class LectureOut(BaseModel):
+    id: int
+    subject_id: int
+    subject_name: str | None
+    date: dt.date
+    pair_number: int | None
+    content_md: str
+    created_at: dt.datetime
+    attachments: list[AttachmentOut]
+
+
 # --- Schedule ---
 class ResolvedOut(BaseModel):
     subject_id: int

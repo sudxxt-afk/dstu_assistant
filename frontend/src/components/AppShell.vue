@@ -11,6 +11,7 @@ const parity = ref("");
 const nav = [
   { to: "/schedule", icon: "calendar", label: "Расписание" },
   { to: "/tasks", icon: "tasks", label: "Задачи" },
+  { to: "/lectures", icon: "book", label: "Лекции" },
   { to: "/editor", icon: "editor", label: "Редактор" },
   { to: "/settings", icon: "settings", label: "Настройки" },
 ];
