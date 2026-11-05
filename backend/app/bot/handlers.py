@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import re
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
@@ -10,8 +11,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from .. import obsidian
+from ..dateparse import parse_due
 from ..db import async_session
 from ..models import Attachment, LectureNote, Subject, Task
 from ..schedule_logic import (
@@ -290,13 +293,33 @@ async def cap_cancel(cb: CallbackQuery, state: FSMContext):
 # ---------------- Задачи ----------------
 async def _tasks() -> list:
     async with async_session() as db:
-        return (
-            await db.execute(select(Task).where(Task.done == False))  # noqa: E712
-        ).scalars().all()
+        q = (
+            select(Task)
+            .options(selectinload(Task.subject))
+            .where(Task.done == False)  # noqa: E712
+            .order_by(
+                Task.priority.desc(),
+                Task.due_date.is_(None),
+                Task.due_date,
+                Task.created_at,
+            )
+        )
+        return (await db.execute(q)).scalars().all()
 
 
 def _tasks_header(tasks: list) -> str:
-    return "✅ <b>Активные задачи</b>" if tasks else "✅ <b>Задачи</b>\n\nПусто"
+    if not tasks:
+        return "✅ <b>Задачи</b>\n\nПусто — красота."
+    today = today_local()
+    overdue = sum(1 for t in tasks if t.due_date and t.due_date < today)
+    due_today = sum(1 for t in tasks if t.due_date == today)
+    parts = []
+    if overdue:
+        parts.append(f"🔴 просрочено: {overdue}")
+    if due_today:
+        parts.append(f"📌 сегодня: {due_today}")
+    parts.append(f"всего: {len(tasks)}")
+    return "✅ <b>Активные задачи</b>\n" + " · ".join(parts)
 
 
 @router.callback_query(F.data == "menu:tasks")
@@ -330,14 +353,30 @@ async def task_del(cb: CallbackQuery):
     await _respond(cb, _tasks_header(tasks), kb.tasks_kb(tasks), toast="Удалено")
 
 
+@router.callback_query(F.data.startswith("task:prio:"))
+async def task_prio(cb: CallbackQuery):
+    tid = int(cb.data.split(":")[2])
+    async with async_session() as db:
+        t = await db.get(Task, tid)
+        if t:
+            t.priority = 0 if t.priority else 1
+            await db.commit()
+    tasks = await _tasks()
+    await _respond(cb, _tasks_header(tasks), kb.tasks_kb(tasks), toast="Готово")
+
+
 @router.callback_query(F.data == "task:add")
 async def task_add(cb: CallbackQuery, state: FSMContext):
     await state.set_state(AddTask.waiting)
     await state.update_data(msg_id=cb.message.message_id, chat_id=cb.message.chat.id)
     await _respond(
         cb,
-        "➕ Напиши задачу. Можно с дедлайном через «|»:\n"
-        "<code>Сдать лабу по физике | 2026-11-20</code>",
+        "➕ Напиши задачу. Можно добавить:\n"
+        "• <b>срок</b> через «|» — <code>завтра</code>, <code>20.11</code>, "
+        "<code>пн</code>, <code>+3</code>, <code>2026-11-20</code>\n"
+        "• <b>!</b> в начале — пометить важной\n"
+        "• <b>@Предмет</b> — привязать к предмету\n\n"
+        "<code>!Сдать лабу @Физика | пятница</code>",
         kb.back_kb(),
     )
 
@@ -347,16 +386,51 @@ async def task_save(message: Message, state: FSMContext):
     raw = message.text.strip()
     title, _, due_raw = raw.partition("|")
     title = title.strip()
+
+    priority = 0
+    if title.startswith("!"):
+        priority = 1
+        title = title[1:].strip()
+
+    # @Предмет (в любом месте заголовка)
+    subject_id = None
+    subj_warn = ""
+    m = re.search(r"@(\S+)", title)
+    if m:
+        name = m.group(1)
+        title = (title[: m.start()] + title[m.end() :]).strip()
+        async with async_session() as db:
+            subs = (await db.execute(select(Subject))).scalars().all()
+        low = name.lower()
+        match = next(
+            (su for su in subs if su.name.lower() == low or su.name.lower().startswith(low)),
+            None,
+        )
+        if match:
+            subject_id = match.id
+        else:
+            subj_warn = f"\n⚠️ Предмет «{name}» не найден — задача без привязки."
+
+    if not title:
+        await message.answer("Пустой текст задачи. Попробуй ещё раз.")
+        return
+
     due = None
     if due_raw.strip():
         try:
-            due = dt.date.fromisoformat(due_raw.strip())
+            due = parse_due(due_raw, today_local())
         except ValueError:
-            await message.answer("Дата в формате ГГГГ-ММ-ДД. Попробуй ещё раз.")
+            await message.answer(
+                "Не понял срок. Примеры: завтра, 20.11, пн, +3, 2026-11-20."
+            )
             return
     async with async_session() as db:
-        db.add(Task(title=title, due_date=due))
+        db.add(
+            Task(title=title, due_date=due, priority=priority, subject_id=subject_id)
+        )
         await db.commit()
+    if subj_warn:
+        await message.answer(subj_warn.strip())
     data = await state.get_data()
     await state.clear()
     tasks = await _tasks()

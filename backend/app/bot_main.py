@@ -13,6 +13,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, TelegramObject
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from . import obsidian
 from .bot.handlers import router
@@ -26,6 +27,36 @@ from .timeutil import at, now_local, today_local
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)  # не спамить каждую минуту
 log = logging.getLogger("bot")
+
+
+def _active_tasks_stmt():
+    return (
+        select(Task)
+        .options(selectinload(Task.subject))
+        .where(Task.done == False)  # noqa: E712
+        .order_by(
+            Task.priority.desc(),
+            Task.due_date.is_(None),
+            Task.due_date,
+            Task.created_at,
+        )
+    )
+
+
+def _fmt_task_line(t: Task, today: dt.date) -> str:
+    bullet = "❗" if t.priority else "•"
+    subj = f" [{t.subject.name}]" if t.subject else ""
+    extra = ""
+    if t.due_date:
+        if t.due_date < today:
+            extra = f" 🔴 просрочено ({t.due_date:%d.%m})"
+        elif t.due_date == today:
+            extra = " 📌 сегодня"
+        elif t.due_date == today + dt.timedelta(days=1):
+            extra = " · завтра"
+        else:
+            extra = f" · до {t.due_date:%d.%m}"
+    return f"{bullet} {t.title}{subj}{extra}"
 
 
 class AccessMiddleware(BaseMiddleware):
@@ -82,16 +113,19 @@ async def _tick(bot: Bot):
 
         # Утренний бриф
         if hhmm == cfg.morning_brief_time and today.isoformat() not in _sent_brief:
-            tasks = (
-                await db.execute(select(Task).where(Task.done == False))  # noqa: E712
-            ).scalars().all()
+            tasks = (await db.execute(_active_tasks_stmt())).scalars().all()
             parity = week_parity(today, cfg)
             wk = week_number(today, cfg)
             text = "☀️ <b>Доброе утро!</b>\n\n" + render_day(today, lessons, wk, parity)
-            if tasks:
+            hot = [t for t in tasks if t.due_date and t.due_date <= today]
+            rest = [t for t in tasks if t not in hot]
+            if hot:
+                text += "\n\n🔥 <b>Горящее:</b>\n" + "\n".join(
+                    _fmt_task_line(t, today) for t in hot
+                )
+            if rest:
                 text += "\n\n📋 <b>Задачи:</b>\n" + "\n".join(
-                    f"• {t.title}" + (f" (до {t.due_date:%d.%m})" if t.due_date else "")
-                    for t in tasks
+                    _fmt_task_line(t, today) for t in rest
                 )
             try:
                 await bot.send_message(settings.allowed_user_id, text)
@@ -110,6 +144,12 @@ async def _tick(bot: Bot):
                 week_number(tomorrow, cfg),
                 week_parity(tomorrow, cfg),
             )
+            tasks = (await db.execute(_active_tasks_stmt())).scalars().all()
+            due_tmrw = [t for t in tasks if t.due_date and t.due_date <= tomorrow]
+            if due_tmrw:
+                text += "\n\n⏰ <b>Дедлайны:</b>\n" + "\n".join(
+                    _fmt_task_line(t, today) for t in due_tmrw
+                )
             try:
                 await bot.send_message(settings.allowed_user_id, text)
             except Exception as e:  # noqa: BLE001

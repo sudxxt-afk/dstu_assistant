@@ -125,6 +125,7 @@ class Task(Base):
     title: Mapped[str] = mapped_column(String(300))
     due_date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)
     done: Mapped[bool] = mapped_column(Boolean, default=False)
+    priority: Mapped[int] = mapped_column(Integer, default=0)  # 0 — обычная, 1 — важная
     remind_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime, default=dt.datetime.utcnow

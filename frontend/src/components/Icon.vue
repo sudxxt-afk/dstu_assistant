@@ -18,6 +18,7 @@ const paths = {
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   dot: '<circle cx="12" cy="12" r="4"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.25 4.15 1 5.85L12 17l-5.25 2.75 1-5.85L3.5 9.7l5.9-.9Z"/>',
 };
 </script>
 

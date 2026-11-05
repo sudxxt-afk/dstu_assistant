@@ -5,6 +5,7 @@ import datetime as dt
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from .. import models as m
 from ..schedule_logic import (
@@ -184,14 +185,42 @@ async def delete_exception(eid: int, db: AsyncSession = Depends(get_session)):
 
 
 # ---------------- Tasks ----------------
+def _task_out(t: m.Task) -> s.TaskOut:
+    return s.TaskOut(
+        id=t.id,
+        title=t.title,
+        subject_id=t.subject_id,
+        due_date=t.due_date,
+        priority=t.priority,
+        done=t.done,
+        subject_name=t.subject.name if t.subject else None,
+    )
+
+
+async def _load_task(db: AsyncSession, tid: int) -> m.Task | None:
+    q = select(m.Task).options(selectinload(m.Task.subject)).where(m.Task.id == tid)
+    return (await db.execute(q)).scalar_one_or_none()
+
+
 @router.get("/tasks", response_model=list[s.TaskOut])
 async def list_tasks(
     include_done: bool = False, db: AsyncSession = Depends(get_session)
 ):
-    q = select(m.Task).order_by(m.Task.due_date.is_(None), m.Task.due_date)
+    # Важные вверху, затем по сроку (без срока — в конец), затем по дате создания.
+    q = (
+        select(m.Task)
+        .options(selectinload(m.Task.subject))
+        .order_by(
+            m.Task.done,
+            m.Task.priority.desc(),
+            m.Task.due_date.is_(None),
+            m.Task.due_date,
+            m.Task.created_at,
+        )
+    )
     if not include_done:
         q = q.where(m.Task.done == False)  # noqa: E712
-    return (await db.execute(q)).scalars().all()
+    return [_task_out(t) for t in (await db.execute(q)).scalars().all()]
 
 
 @router.post("/tasks", response_model=s.TaskOut)
@@ -199,8 +228,20 @@ async def create_task(body: s.TaskIn, db: AsyncSession = Depends(get_session)):
     obj = m.Task(**body.model_dump())
     db.add(obj)
     await db.commit()
-    await db.refresh(obj)
-    return obj
+    return _task_out(await _load_task(db, obj.id))
+
+
+@router.patch("/tasks/{tid}", response_model=s.TaskOut)
+async def update_task(
+    tid: int, body: s.TaskPatch, db: AsyncSession = Depends(get_session)
+):
+    obj = await db.get(m.Task, tid)
+    if not obj:
+        raise HTTPException(404, "Задача не найдена")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(obj, field, value)
+    await db.commit()
+    return _task_out(await _load_task(db, tid))
 
 
 @router.patch("/tasks/{tid}/toggle", response_model=s.TaskOut)
@@ -210,7 +251,7 @@ async def toggle_task(tid: int, db: AsyncSession = Depends(get_session)):
         raise HTTPException(404, "Задача не найдена")
     obj.done = not obj.done
     await db.commit()
-    return obj
+    return _task_out(await _load_task(db, tid))
 
 
 @router.delete("/tasks/{tid}")

@@ -77,11 +77,21 @@ class TaskIn(BaseModel):
     title: str
     subject_id: int | None = None
     due_date: dt.date | None = None
+    priority: int = 0
+
+
+class TaskPatch(BaseModel):
+    title: str | None = None
+    subject_id: int | None = None
+    due_date: dt.date | None = None
+    priority: int | None = None
+    done: bool | None = None
 
 
 class TaskOut(TaskIn):
     id: int
     done: bool
+    subject_name: str | None = None
 
 
 # --- Schedule ---

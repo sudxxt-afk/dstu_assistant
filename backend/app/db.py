@@ -48,6 +48,21 @@ async def init_db() -> None:
         await conn.exec_driver_sql(
             "CREATE INDEX IF NOT EXISTS ix_task_done ON task(done)"
         )
+        # Лёгкая миграция: добавить недостающие столбцы в существующую БД
+        # (create_all новые колонки в старую таблицу не добавляет).
+        cols = {
+            row[1]
+            for row in (
+                await conn.exec_driver_sql("PRAGMA table_info(task)")
+            ).all()
+        }
+        if "priority" not in cols:
+            await conn.exec_driver_sql(
+                "ALTER TABLE task ADD COLUMN priority INTEGER NOT NULL DEFAULT 0"
+            )
+        await conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS ix_task_due ON task(due_date)"
+        )
 
     from .seed import seed_defaults
 
