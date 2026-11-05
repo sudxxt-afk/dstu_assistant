@@ -19,7 +19,8 @@ from .models import AppMeta, LectureNote
 
 log = logging.getLogger("notion")
 
-API = "https://api.notion.com/v1"
+# Базовый адрес: штатный или прокси-воркер (обход SNI-блокировки провайдера).
+API = (settings.notion_api_base.rstrip("/") or "https://api.notion.com") + "/v1"
 DB_KEY = "notion_lectures_db_id"
 _TEXT_LIMIT = 1900  # запас к лимиту Notion 2000 симв/фрагмент
 _db_id_cache: str | None = None

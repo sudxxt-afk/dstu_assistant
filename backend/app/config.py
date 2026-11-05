@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     notion_token: str = ""  # Internal Integration Secret (ntn_… / secret_…)
     notion_parent_page_id: str = ""  # страница-родитель, где создаётся база
     notion_version: str = "2022-06-28"  # стабильная версия (модель database_id)
+    # Прокси для обхода блокировки api.notion.com по SNI (как TG-воркер).
+    # Пусто -> штатный https://api.notion.com. Указывать origin воркера.
+    notion_api_base: str = ""
 
 
 settings = Settings()
