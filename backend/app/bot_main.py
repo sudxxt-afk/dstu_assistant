@@ -10,7 +10,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Message, TelegramObject
+from aiogram.types import CallbackQuery, Message, TelegramObject
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -59,8 +59,13 @@ def _fmt_task_line(t: Task, today: dt.date) -> str:
     return f"{bullet} {t.title}{subj}{extra}"
 
 
+# Что доступно пользователю «только для чтения» (одногруппнику).
+RO_CALLBACKS = {"nav:today", "nav:tomorrow", "nav:week", "nav:next", "menu:home"}
+RO_DENY_TEXT = "🔒 Тебе доступен только просмотр расписания. Нажми /start."
+
+
 class AccessMiddleware(BaseMiddleware):
-    """Пропускает только владельца. Незнакомцу подсказывает его ID."""
+    """Владелец — полный доступ; read-only — только расписание; остальным отказ."""
 
     async def __call__(self, handler, event: TelegramObject, data: dict):
         user = data.get("event_from_user")
@@ -75,10 +80,26 @@ class AccessMiddleware(BaseMiddleware):
                     "Впиши его в .env → ALLOWED_USER_ID и перезапусти бота."
                 )
             return
-        if uid != allowed:
-            log.info("ACCESS: denied telegram_id=%s", uid)
+
+        if uid == allowed:
+            return await handler(event, data)
+
+        # Режим «только чтение»
+        if uid in settings.readonly_ids:
+            if isinstance(event, CallbackQuery):
+                if event.data in RO_CALLBACKS:
+                    return await handler(event, data)
+                await event.answer("🔒 Только просмотр расписания", show_alert=True)
+                return
+            if isinstance(event, Message):
+                if event.text and event.text.startswith("/start"):
+                    return await handler(event, data)
+                await event.answer(RO_DENY_TEXT)
+                return
             return
-        return await handler(event, data)
+
+        log.info("ACCESS: denied telegram_id=%s", uid)
+        return
 
 
 # --- Планировщик: защита от повторной отправки в ту же минуту ---
@@ -132,6 +153,15 @@ async def _tick(bot: Bot):
                 obsidian.write_daily_note(today, lessons, tasks, wk, parity)
             except Exception as e:  # noqa: BLE001
                 log.warning("brief failed: %s", e)
+            # Одногруппникам (read-only) — только расписание, без задач.
+            ro_text = "☀️ <b>Доброе утро!</b>\n\n" + render_day(
+                today, lessons, wk, parity
+            )
+            for ruid in settings.readonly_ids:
+                try:
+                    await bot.send_message(ruid, ro_text)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("brief→ro %s failed: %s", ruid, e)
             _sent_brief.add(today.isoformat())
 
         # Вечерняя рассылка расписания на завтра (20:00)
@@ -166,15 +196,16 @@ async def _tick(bot: Bot):
             key = (today.isoformat(), ls.pair_number)
             if remind_dt.strftime("%H:%M") == hhmm and key not in _sent_reminders:
                 room = f", ауд. {ls.room}" if ls.room else ""
-                try:
-                    await bot.send_message(
-                        settings.allowed_user_id,
-                        f"🔔 Через {cfg.reminder_minutes} мин — "
-                        f"<b>{ls.subject_name}</b> ({ls.type})\n"
-                        f"🕐 {ls.start_time}{room}",
-                    )
-                except Exception as e:  # noqa: BLE001
-                    log.warning("reminder failed: %s", e)
+                msg = (
+                    f"🔔 Через {cfg.reminder_minutes} мин — "
+                    f"<b>{ls.subject_name}</b> ({ls.type})\n"
+                    f"🕐 {ls.start_time}{room}"
+                )
+                for ruid in [settings.allowed_user_id, *settings.readonly_ids]:
+                    try:
+                        await bot.send_message(ruid, msg)
+                    except Exception as e:  # noqa: BLE001
+                        log.warning("reminder→%s failed: %s", ruid, e)
                 _sent_reminders.add(key)
 
 

@@ -5,24 +5,26 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 HOME_BTN = InlineKeyboardButton(text="⬅️ Меню", callback_data="menu:home")
 
 
-def dashboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="📅 Сегодня", callback_data="nav:today"),
-                InlineKeyboardButton(text="📅 Завтра", callback_data="nav:tomorrow"),
-            ],
-            [
-                InlineKeyboardButton(text="📆 Неделя", callback_data="nav:week"),
-                InlineKeyboardButton(text="⏭ Следующая", callback_data="nav:next"),
-            ],
+def dashboard(readonly: bool = False) -> InlineKeyboardMarkup:
+    rows = [
+        [
+            InlineKeyboardButton(text="📅 Сегодня", callback_data="nav:today"),
+            InlineKeyboardButton(text="📅 Завтра", callback_data="nav:tomorrow"),
+        ],
+        [
+            InlineKeyboardButton(text="📆 Неделя", callback_data="nav:week"),
+            InlineKeyboardButton(text="⏭ Следующая", callback_data="nav:next"),
+        ],
+    ]
+    if not readonly:
+        rows += [
             [
                 InlineKeyboardButton(text="📝 Лекция", callback_data="menu:lecture"),
                 InlineKeyboardButton(text="✅ Задачи", callback_data="menu:tasks"),
             ],
             [InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings")],
         ]
-    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def subjects_kb(subjects: list, prefix: str) -> InlineKeyboardMarkup:

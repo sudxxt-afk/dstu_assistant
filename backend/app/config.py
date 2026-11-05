@@ -9,6 +9,11 @@ class Settings(BaseSettings):
 
     bot_token: str = ""
     allowed_user_id: int | None = None
+    # ID пользователей «только для чтения» (одногруппники): видят лишь расписание
+    # и получают утреннее уведомление + напоминания о парах. Строка CSV в .env,
+    # разобранный список — в свойстве readonly_ids (str, т.к. pydantic-settings
+    # пытается JSON-парсить env для сложных типов вроде list[int]).
+    readonly_user_ids: str = ""
     # Кастомный адрес Telegram Bot API (напр. Cloudflare Worker-прокси).
     # Пусто -> штатный api.telegram.org.
     telegram_api_base: str = ""
@@ -22,6 +27,12 @@ class Settings(BaseSettings):
         if v is None or (isinstance(v, str) and v.strip() == ""):
             return None
         return v
+
+    @property
+    def readonly_ids(self) -> list[int]:
+        # "1058333123, 222" -> [1058333123, 222]; пусто -> []
+        raw = self.readonly_user_ids or ""
+        return [int(x) for x in raw.replace(";", ",").split(",") if x.strip()]
     api_token: str = "change-me"
 
     tz: str = "Europe/Moscow"

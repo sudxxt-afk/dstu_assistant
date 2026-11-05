@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from .. import media
+from ..config import settings
 from ..dateparse import parse_due
 from ..db import async_session
 from ..models import Attachment, LectureNote, Subject, Task
@@ -107,43 +108,58 @@ async def _next_text() -> str:
     return "⏭ Впереди пар нет 🎉"
 
 
+def _ro(uid: int | None) -> bool:
+    """Пользователь «только для чтения» (одногруппник), не владелец."""
+    return uid != settings.allowed_user_id and uid in settings.readonly_ids
+
+
+def _dash_text(uid: int | None) -> str:
+    if _ro(uid):
+        return "🎓 <b>DSTU Assistant</b>\nРасписание группы У632 👇"
+    return DASHBOARD_TEXT
+
+
 # ---------------- /start ----------------
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer("Меню 👇", reply_markup=ReplyKeyboardRemove())
-    await message.answer(DASHBOARD_TEXT, reply_markup=kb.dashboard())
+    uid = message.from_user.id if message.from_user else None
+    await message.answer(_dash_text(uid), reply_markup=kb.dashboard(_ro(uid)))
 
 
 # ---------------- навигация (редактируем то же сообщение) ----------------
 @router.callback_query(F.data == "nav:today")
 async def nav_today(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _respond(cb, await _day_text(today_local()), kb.dashboard())
+    await _respond(cb, await _day_text(today_local()), kb.dashboard(_ro(cb.from_user.id)))
 
 
 @router.callback_query(F.data == "nav:tomorrow")
 async def nav_tomorrow(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _respond(cb, await _day_text(today_local() + dt.timedelta(days=1)), kb.dashboard())
+    await _respond(
+        cb,
+        await _day_text(today_local() + dt.timedelta(days=1)),
+        kb.dashboard(_ro(cb.from_user.id)),
+    )
 
 
 @router.callback_query(F.data == "nav:week")
 async def nav_week(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _respond(cb, await _week_text(today_local()), kb.dashboard())
+    await _respond(cb, await _week_text(today_local()), kb.dashboard(_ro(cb.from_user.id)))
 
 
 @router.callback_query(F.data == "nav:next")
 async def nav_next(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _respond(cb, await _next_text(), kb.dashboard())
+    await _respond(cb, await _next_text(), kb.dashboard(_ro(cb.from_user.id)))
 
 
 @router.callback_query(F.data == "menu:home")
 async def go_home(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-    await _respond(cb, DASHBOARD_TEXT, kb.dashboard())
+    await _respond(cb, _dash_text(cb.from_user.id), kb.dashboard(_ro(cb.from_user.id)))
 
 
 # ---------------- Лекция ----------------
