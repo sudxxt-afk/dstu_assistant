@@ -13,6 +13,15 @@ PARITY = ("every", "odd", "even")  # каждую / нечётная / чётн�
 EXCEPTION_KINDS = ("cancel", "move", "add")
 
 
+class AppMeta(Base):
+    """Key-value для рантайм-значений (напр. id созданной базы Notion)."""
+
+    __tablename__ = "app_meta"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, default="")
+
+
 class Config(Base):
     """Единственная строка настроек (id=1)."""
 
@@ -96,6 +105,8 @@ class LectureNote(Base):
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime, default=dt.datetime.utcnow
     )
+    notion_page_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    notion_url: Mapped[str | None] = mapped_column(String(400), nullable=True)
 
     subject: Mapped["Subject"] = relationship()
     attachments: Mapped[list["Attachment"]] = relationship(

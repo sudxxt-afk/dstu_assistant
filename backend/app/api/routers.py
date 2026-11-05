@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from .. import media
 from .. import models as m
+from .. import notion
 from ..schedule_logic import (
     WEEKDAY_RU,
     get_config,
@@ -286,6 +288,7 @@ def _lecture_out(n: m.LectureNote) -> s.LectureOut:
         content_md=n.content_md,
         created_at=n.created_at,
         attachments=[_attach_out(a) for a in n.attachments],
+        notion_url=n.notion_url,
     )
 
 
@@ -335,6 +338,7 @@ async def list_lectures(
                 preview=preview,
                 attachments=len(n.attachments),
                 created_at=n.created_at,
+                notion_url=n.notion_url,
             )
         )
     return out
@@ -355,6 +359,7 @@ async def create_lecture(body: s.LectureIn, db: AsyncSession = Depends(get_sessi
     obj = m.LectureNote(**body.model_dump())
     db.add(obj)
     await db.commit()
+    asyncio.create_task(notion.sync_lecture(obj.id))
     return _lecture_out(await _load_lecture(db, obj.id))
 
 
@@ -368,6 +373,7 @@ async def update_lecture(
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(obj, field, value)
     await db.commit()
+    asyncio.create_task(notion.sync_lecture(nid))
     return _lecture_out(await _load_lecture(db, nid))
 
 
@@ -375,6 +381,7 @@ async def update_lecture(
 async def delete_lecture(nid: int, db: AsyncSession = Depends(get_session)):
     n = await _load_lecture(db, nid)
     if n:
+        page_id = n.notion_page_id
         for a in n.attachments:
             try:
                 Path(a.file_path).unlink(missing_ok=True)
@@ -382,6 +389,7 @@ async def delete_lecture(nid: int, db: AsyncSession = Depends(get_session)):
                 pass
         await db.delete(n)  # attachments уйдут каскадом
         await db.commit()
+        asyncio.create_task(notion.archive_page(page_id))
     return {"ok": True}
 
 
@@ -408,6 +416,7 @@ async def upload_attachment(
         )
     )
     await db.commit()
+    asyncio.create_task(notion.sync_lecture(nid))
     return _lecture_out(await _load_lecture(db, nid))
 
 
@@ -428,13 +437,54 @@ async def get_attachment(aid: int, db: AsyncSession = Depends(get_session)):
 async def delete_attachment(aid: int, db: AsyncSession = Depends(get_session)):
     a = await db.get(m.Attachment, aid)
     if a:
+        note_id = a.note_id
         try:
             Path(a.file_path).unlink(missing_ok=True)
         except OSError:
             pass
         await db.delete(a)
         await db.commit()
+        asyncio.create_task(notion.sync_lecture(note_id))
     return {"ok": True}
+
+
+# ---------------- Notion-синк ----------------
+@router.get("/notion/status")
+async def notion_status(db: AsyncSession = Depends(get_session)):
+    db_id = await notion.ensure_database(create=False) if notion.enabled() else None
+    total = (
+        await db.execute(select(m.LectureNote.id))
+    ).scalars().all()
+    synced = (
+        await db.execute(
+            select(m.LectureNote.id).where(m.LectureNote.notion_page_id.isnot(None))
+        )
+    ).scalars().all()
+    return {
+        "enabled": notion.enabled(),
+        "configured": bool(db_id),
+        "database_id": db_id,
+        "total": len(total),
+        "synced": len(synced),
+    }
+
+
+@router.post("/notion/setup")
+async def notion_setup():
+    if not notion.enabled():
+        raise HTTPException(400, "NOTION_TOKEN не задан в .env")
+    try:
+        db_id = await notion.ensure_database(create=True)
+    except RuntimeError as e:
+        raise HTTPException(400, str(e))
+    return {"ok": True, "database_id": db_id}
+
+
+@router.post("/notion/sync-all")
+async def notion_sync_all():
+    if not notion.enabled():
+        raise HTTPException(400, "NOTION_TOKEN не задан в .env")
+    return await notion.sync_all()
 
 
 # ---------------- Schedule ----------------

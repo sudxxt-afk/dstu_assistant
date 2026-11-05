@@ -40,5 +40,10 @@ class Settings(BaseSettings):
     vault_path: str = "/data/vault"
     media_path: str = "/data/media"  # вложения лекций (нейтральное хранилище, не Obsidian)
 
+    # --- Notion-синк лекций (одностороннее: приложение -> Notion) ---
+    notion_token: str = ""  # Internal Integration Secret (ntn_… / secret_…)
+    notion_parent_page_id: str = ""  # страница-родитель, где создаётся база
+    notion_version: str = "2022-06-28"  # стабильная версия (модель database_id)
+
 
 settings = Settings()

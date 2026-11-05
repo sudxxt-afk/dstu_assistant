@@ -144,11 +144,47 @@ async function download(a) {
   }
 }
 
+// --- Notion-синк ---
+const notion = ref({ enabled: false, configured: false, total: 0, synced: 0 });
+const syncing = ref(false);
+async function loadNotion() {
+  try {
+    notion.value = await api.get("/notion/status");
+  } catch {
+    /* статус необязателен */
+  }
+}
+async function notionSetup() {
+  syncing.value = true;
+  try {
+    await api.post("/notion/setup");
+    await syncAll();
+  } catch (e) {
+    err.value = e.message || "Не удалось подключить Notion";
+  } finally {
+    syncing.value = false;
+  }
+}
+async function syncAll() {
+  syncing.value = true;
+  err.value = "";
+  try {
+    await api.post("/notion/sync-all");
+    await loadList();
+    await loadNotion();
+  } catch (e) {
+    err.value = e.message || "Ошибка синхронизации";
+  } finally {
+    syncing.value = false;
+  }
+}
+
 const empty = computed(() => mode.value === "list" && !lectures.value.length);
 
 onMounted(() => {
   loadSubjects();
   loadList();
+  loadNotion();
 });
 onUnmounted(revokeImgs);
 </script>
@@ -170,6 +206,21 @@ onUnmounted(revokeImgs);
         <option v-for="su in subjects" :key="su.id" :value="su.id">{{ su.name }}</option>
       </select>
     </div>
+
+    <div v-if="notion.enabled" class="notionbar">
+      <span class="nbtext">
+        <Icon name="book" :size="14" />
+        <template v-if="notion.configured">Notion: {{ notion.synced }}/{{ notion.total }} синхронизировано</template>
+        <template v-else>Notion подключён, база не создана</template>
+      </span>
+      <button v-if="notion.configured" class="btn btn-ghost sm" :disabled="syncing" @click="syncAll">
+        {{ syncing ? "Синхронизирую…" : "Синхронизировать" }}
+      </button>
+      <button v-else class="btn btn-primary sm" :disabled="syncing" @click="notionSetup">
+        {{ syncing ? "Подключаю…" : "Создать базу и синхр." }}
+      </button>
+    </div>
+    <div v-if="err" class="err">{{ err }}</div>
 
     <div v-if="empty" class="empty">
       <strong>Пока нет лекций</strong>
@@ -206,6 +257,7 @@ onUnmounted(revokeImgs);
         </div>
       </div>
       <div class="acts">
+        <a v-if="current.notion_url" class="icon-btn" :href="current.notion_url" target="_blank" rel="noopener" aria-label="Открыть в Notion" title="Открыть в Notion"><Icon name="book" :size="16" /></a>
         <button class="icon-btn" aria-label="Редактировать" @click="startEdit"><Icon name="editor" :size="16" /></button>
         <button class="icon-btn danger" aria-label="Удалить" @click="removeLecture"><Icon name="trash" :size="16" /></button>
       </div>
@@ -281,7 +333,31 @@ onUnmounted(revokeImgs);
   font-size: var(--text-sm);
 }
 .filterbar {
+  margin-bottom: var(--space-4);
+}
+.notionbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-5);
+  background: var(--color-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.nbtext {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.btn.sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
 }
 .sel {
   max-width: 260px;

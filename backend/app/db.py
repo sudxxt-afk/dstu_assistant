@@ -63,6 +63,21 @@ async def init_db() -> None:
         await conn.exec_driver_sql(
             "CREATE INDEX IF NOT EXISTS ix_task_due ON task(due_date)"
         )
+        # Поля Notion-синка у лекций.
+        lcols = {
+            row[1]
+            for row in (
+                await conn.exec_driver_sql("PRAGMA table_info(lecture_note)")
+            ).all()
+        }
+        if "notion_page_id" not in lcols:
+            await conn.exec_driver_sql(
+                "ALTER TABLE lecture_note ADD COLUMN notion_page_id VARCHAR(64)"
+            )
+        if "notion_url" not in lcols:
+            await conn.exec_driver_sql(
+                "ALTER TABLE lecture_note ADD COLUMN notion_url VARCHAR(400)"
+            )
 
     from .seed import seed_defaults
 

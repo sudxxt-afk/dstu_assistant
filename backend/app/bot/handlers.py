@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from .. import media
+from .. import notion
 from ..config import settings
 from ..dateparse import parse_due
 from ..db import async_session
@@ -278,16 +279,18 @@ async def cap_done(cb: CallbackQuery, state: FSMContext):
         )
         db.add(note)
         await db.flush()
+        note_id = note.id
         for a in data["attach_db"]:
             db.add(
                 Attachment(
-                    note_id=note.id,
+                    note_id=note_id,
                     kind=a["kind"],
                     file_path=a["file_path"],
                     original_name=a["orig"],
                 )
             )
         await db.commit()
+    asyncio.create_task(notion.sync_lecture(note_id))
     await state.clear()
     n_att = len(data["attach_rels"])
     extra = f" · вложений: {n_att}" if n_att else ""

@@ -125,6 +125,7 @@ class LectureListItem(BaseModel):
     preview: str
     attachments: int
     created_at: dt.datetime
+    notion_url: str | None = None
 
 
 class LectureOut(BaseModel):
@@ -136,6 +137,7 @@ class LectureOut(BaseModel):
     content_md: str
     created_at: dt.datetime
     attachments: list[AttachmentOut]
+    notion_url: str | None = None
 
 
 # --- Schedule ---
